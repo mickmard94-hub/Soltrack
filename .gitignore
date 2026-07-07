@@ -1,0 +1,9 @@
+back-end/vendor/
+front-end/node_modules/
+back-end/.env
+back-end/database/database.sqlite
+back-end/storage/logs/*.log
+back-end/bootstrap/cache/*.php
+.DS_Store
+Thumbs.db
+front-end/dist/
