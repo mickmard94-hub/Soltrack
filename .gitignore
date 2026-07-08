@@ -1,9 +1,51 @@
+# ===== Back-end (Laravel) =====
 back-end/vendor/
-front-end/node_modules/
 back-end/.env
+back-end/.env.*
+!back-end/.env.example
 back-end/database/database.sqlite
+back-end/database/*.sqlite
+back-end/storage/*.key
 back-end/storage/logs/*.log
+back-end/storage/framework/cache/*
+back-end/storage/framework/sessions/*
+back-end/storage/framework/testing/*
+back-end/storage/framework/views/*
+!back-end/storage/framework/cache/.gitignore
+!back-end/storage/framework/sessions/.gitignore
+!back-end/storage/framework/testing/.gitignore
+!back-end/storage/framework/views/.gitignore
 back-end/bootstrap/cache/*.php
+!back-end/bootstrap/cache/.gitignore
+back-end/public/hot
+back-end/public/storage
+back-end/.phpunit.result.cache
+back-end/Homestead.json
+back-end/Homestead.yaml
+
+# ===== Front-end (React / Vite) =====
+front-end/node_modules/
+front-end/dist/
+front-end/build/
+front-end/.vite/
+front-end/npm-debug.log*
+front-end/yarn-debug.log*
+front-end/yarn-error.log*
+front-end/.env
+front-end/.env.local
+front-end/.env.*.local
+
+# ===== Éditeurs / IDE =====
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ===== Système d'exploitation =====
 .DS_Store
 Thumbs.db
-front-end/dist/
+desktop.ini
+
+# ===== Divers =====
+*.log
+*.cache
