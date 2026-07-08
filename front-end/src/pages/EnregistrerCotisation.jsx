@@ -6,6 +6,7 @@ function EnregistrerCotisation() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [membres, setMembres] = useState([]);
+  const [chargementMembres, setChargementMembres] = useState(true);
   const [erreurs, setErreurs] = useState({});
   const [erreurGenerale, setErreurGenerale] = useState('');
   const [form, setForm] = useState({
@@ -16,12 +17,15 @@ function EnregistrerCotisation() {
   });
 
   useEffect(() => {
+    setChargementMembres(true);
     api.get(`/sols/${id}/membres`)
       .then((response) => {
         setMembres(response.data);
+        setChargementMembres(false);
       })
       .catch((error) => {
         console.error('Erreur lors du chargement des membres :', error);
+        setChargementMembres(false);
       });
   }, [id]);
 
@@ -66,17 +70,27 @@ function EnregistrerCotisation() {
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label className="form-label">Membre</label>
-          <select
-            className="form-select"
-            name="membre_id"
-            value={form.membre_id}
-            onChange={handleChange}
-          >
-            <option value="">-- Sélectionner un membre --</option>
-            {membres.map((membre) => (
-              <option key={membre.id} value={membre.id}>{membre.nom}</option>
-            ))}
-          </select>
+          {chargementMembres ? (
+            // Empêche toute interaction avec le menu tant que la liste réelle
+            // des membres n'est pas arrivée du serveur : évite de proposer un
+            // menu vide ou périmé (source de confusion pour l'utilisateur,
+            // et de faux échecs pour des tests automatisés trop rapides).
+            <select className="form-select" disabled>
+              <option>Chargement des membres...</option>
+            </select>
+          ) : (
+            <select
+              className="form-select"
+              name="membre_id"
+              value={form.membre_id}
+              onChange={handleChange}
+            >
+              <option value="">-- Sélectionner un membre --</option>
+              {membres.map((membre) => (
+                <option key={membre.id} value={membre.id}>{membre.nom}</option>
+              ))}
+            </select>
+          )}
           {erreurs.membre_id && <div className="text-danger">{erreurs.membre_id[0]}</div>}
         </div>
 
@@ -119,7 +133,7 @@ function EnregistrerCotisation() {
         </div>
 
         <div className="d-flex gap-2">
-          <button type="submit" className="btn btn-sol">
+          <button type="submit" className="btn btn-sol" disabled={chargementMembres}>
             Enregistrer
           </button>
           <button type="button" className="btn btn-outline-secondary" onClick={handleAnnuler}>
