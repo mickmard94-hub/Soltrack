@@ -4,7 +4,10 @@
 
 Application web full-stack permettant à un responsable de sol de suivre les cotisations, les tours de versement et le tableau de bord financier de ses tontines, sans risque d'erreur de calcul ou de conflit entre membres.
 
-🎥 **Vidéo de démonstration** (présentation + tests Selenium) : https://youtu.be/0Q3PheyyKzs
+🎥 **Vidéo de démonstration** (tests Selenium) : https://youtu.be/0Q3PheyyKzs
+🎥 **Vidéo de démonstration** (présentation du travail) : https://youtu.be/o1LiWUi3UjI?si=xb5GN97Y7aJE_CH6
+🎥 **Vidéo de démonstration** (test postman) : https://youtu.be/3BtQ_VN2HiQ
+
 
 ## Contexte
 
