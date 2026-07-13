@@ -7,6 +7,8 @@ Application web full-stack permettant à un responsable de sol de suivre les cot
 - 🎥 **Vidéo de démonstration** (tests Selenium) : https://youtu.be/0Q3PheyyKzs
 - 🎥 **Vidéo de démonstration** (présentation du travail) : https://youtu.be/o1LiWUi3UjI?si=xb5GN97Y7aJE_CH6
 - 🎥 **Vidéo de démonstration** (test postman) : https://youtu.be/tOTmxbR4JwI
+- 🎥 **Vidéo de démonstration** (hébergement back-end) : https://soltrack-backend.onrender.com/api/sols
+- 🎥 **Vidéo de démonstration** (hébergementfront-end) : https://soltrack-frontend.onrender.com
 
 
 ## Contexte
