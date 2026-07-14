@@ -4,11 +4,29 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class CotisationControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * La date d'une cotisation est toujours "aujourd'hui" (jamais saisie
+     * manuellement) : on fige le temps pour des assertions fiables et
+     * reproductibles, à une date postérieure au début du sol de test.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Carbon::setTestNow('2026-08-01');
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
 
     /**
      * Prépare un sol avec un membre, prêt à recevoir une cotisation.
@@ -20,7 +38,7 @@ class CotisationControllerTest extends TestCase
             'nom' => 'Sol test',
             'montant_cotisation' => 2000,
             'frequence' => 'mensuelle',
-            'nombre_tours' => 5,
+            'nombre_tours' => 1,
             'date_debut' => '2026-08-01',
         ]);
 
@@ -40,6 +58,8 @@ class CotisationControllerTest extends TestCase
 
     /**
      * Test 1 : enregistrement valide d'une cotisation (cas nominal).
+     * La date n'est plus envoyée par le client : elle est toujours celle
+     * du jour d'enregistrement, fixée ici au 2026-08-01.
      */
     public function test_un_utilisateur_peut_enregistrer_une_cotisation(): void
     {
@@ -51,7 +71,6 @@ class CotisationControllerTest extends TestCase
             'membre_id' => $membreId,
             'tour_numero' => 1,
             'montant' => 2000,
-            'date_paiement' => '2026-08-01',
         ]);
 
         $reponse->assertStatus(201);
@@ -59,6 +78,7 @@ class CotisationControllerTest extends TestCase
             'sol_id' => $sol->id,
             'membre_id' => $membreId,
             'statut' => 'paye',
+            'date_paiement' => '2026-08-01',
         ]);
     }
 
@@ -76,7 +96,6 @@ class CotisationControllerTest extends TestCase
             'membre_id' => $membreId,
             'tour_numero' => 1,
             'montant' => 500, // différent des 2000 HTG fixés
-            'date_paiement' => '2026-08-01',
         ]);
 
         $reponse->assertStatus(422);
@@ -100,7 +119,6 @@ class CotisationControllerTest extends TestCase
             'membre_id' => $membreId,
             'tour_numero' => 1,
             'montant' => 2000,
-            'date_paiement' => '2026-08-01',
         ])->assertStatus(201);
 
         // Deuxième cotisation, même membre/tour : doit échouer
@@ -109,7 +127,6 @@ class CotisationControllerTest extends TestCase
             'membre_id' => $membreId,
             'tour_numero' => 1,
             'montant' => 2000,
-            'date_paiement' => '2026-08-05',
         ]);
 
         $reponse->assertStatus(422);
@@ -133,7 +150,6 @@ class CotisationControllerTest extends TestCase
             'membre_id' => $membreIdA, // membre du sol A, pas du sol B
             'tour_numero' => 1,
             'montant' => 2000,
-            'date_paiement' => '2026-08-01',
         ]);
 
         $reponse->assertStatus(422);
@@ -156,7 +172,6 @@ class CotisationControllerTest extends TestCase
             'membre_id' => $membreId,
             'tour_numero' => 1,
             'montant' => 2000,
-            'date_paiement' => '2026-08-01',
         ]);
 
         $this->assertDatabaseHas('tours', [

@@ -16,9 +16,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('sols', SolController::class);
     Route::get('sols/{sol}/tableau-de-bord', [SolController::class, 'tableauDeBord']);
     Route::get('sols/{sol}/cotisations-manquantes', [SolController::class, 'cotisationsManquantes']);
+    Route::get('sols/{sol}/cotisations-par-tour', [SolController::class, 'cotisationsParTour']);
 
     Route::get('sols/{sol}/membres', [MembreController::class, 'index']);
     Route::post('sols/{sol}/membres', [MembreController::class, 'store']);
+    Route::post('sols/{sol}/membres/echanger-tour', [MembreController::class, 'echangerTour']);
     Route::put('membres/{membre}', [MembreController::class, 'update']);
     Route::delete('membres/{membre}', [MembreController::class, 'destroy']);
 

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sol;
+use App\Models\Cotisation;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class SolController extends Controller
 {
@@ -56,6 +58,18 @@ class SolController extends Controller
             'statut' => 'sometimes|required|in:actif,cloture',
         ]);
 
+        // On ne peut pas réduire le nombre de tours en dessous d'un ordre de
+        // réception déjà attribué à un membre existant : casserait la
+        // cohérence des tours déjà créés.
+        if (isset($validated['nombre_tours'])) {
+            $ordreMax = $sol->membres()->max('ordre_reception');
+            if ($ordreMax && $validated['nombre_tours'] < $ordreMax) {
+                return response()->json([
+                    'message' => "Impossible de réduire le nombre de tours à {$validated['nombre_tours']} : un membre a déjà l'ordre de réception {$ordreMax}.",
+                ], 422);
+            }
+        }
+
         $sol->update($validated);
 
         return response()->json($sol);
@@ -81,30 +95,48 @@ class SolController extends Controller
         }
 
         $totalCollecte = $sol->cotisations()->sum('montant');
+        $nombreMembres = $sol->membres()->count();
 
-        $prochainTour = $sol->tours()
-            ->where('statut', 'a_venir')
+        $prochainTourNonVerse = $sol->tours()
+            ->where('statut', '!=', 'verse')
             ->orderBy('numero_tour')
             ->first();
 
-        $cotisationsEnAttente = 0;
-        if ($prochainTour) {
-            $nombreMembres = $sol->membres()->count();
-            $nombreDejaPayes = $sol->cotisations()
-                ->where('tour_numero', $prochainTour->numero_tour)
-                ->count();
-            $cotisationsEnAttente = max(0, $nombreMembres - $nombreDejaPayes);
-        }
+        $toursNonVerses = $sol->tours()->where('statut', '!=', 'verse')->get();
 
-        $cotisationsEnRetard = $sol->tours()
-            ->where('statut', 'a_venir')
-            ->where('date_prevue', '<', now())
-            ->count();
+        $cotisationsEnAttente = 0;
+        $cotisationsEnRetard = 0;
+
+        foreach ($toursNonVerses as $tour) {
+            $aCommence = Carbon::parse($tour->date_prevue)->lte(now());
+            if (!$aCommence) {
+                // Le tour n'a pas encore commencé : on attend simplement,
+                // aucune cotisation n'est comptée en attente ni en retard.
+                continue;
+            }
+
+            $nombreDejaPayes = Cotisation::where('sol_id', $sol->id)
+                ->where('tour_numero', $tour->numero_tour)
+                ->count();
+            $manquants = max(0, $nombreMembres - $nombreDejaPayes);
+
+            if ($manquants === 0) {
+                continue;
+            }
+
+            $periodeTerminee = $tour->date_fin_prevue && Carbon::parse($tour->date_fin_prevue)->lt(now());
+
+            if ($periodeTerminee) {
+                $cotisationsEnRetard += $manquants;
+            } else {
+                $cotisationsEnAttente += $manquants;
+            }
+        }
 
         return response()->json([
             'total_collecte' => $totalCollecte,
-            'prochain_beneficiaire' => $prochainTour?->membreBeneficiaire?->nom,
-            'prochaine_date' => $prochainTour?->date_prevue,
+            'prochain_beneficiaire' => $prochainTourNonVerse?->membreBeneficiaire?->nom,
+            'prochaine_date' => $prochainTourNonVerse?->date_prevue,
             'cotisations_en_attente' => $cotisationsEnAttente,
             'cotisations_en_retard' => $cotisationsEnRetard,
         ]);
@@ -117,29 +149,87 @@ class SolController extends Controller
             return response()->json(['message' => 'Accès non autorisé.'], 403);
         }
 
-        $prochainTour = $sol->tours()
-            ->where('statut', 'a_venir')
+        $prochainTourNonVerse = $sol->tours()
+            ->where('statut', '!=', 'verse')
             ->orderBy('numero_tour')
             ->first();
 
-        if (!$prochainTour) {
+        if (!$prochainTourNonVerse) {
             return response()->json([
+                'statut' => 'termine',
                 'tour_numero' => null,
                 'membres_manquants' => [],
             ]);
         }
 
+        $aCommence = Carbon::parse($prochainTourNonVerse->date_prevue)->lte(now());
+
+        if (!$aCommence) {
+            return response()->json([
+                'statut' => 'pas_commence',
+                'tour_numero' => $prochainTourNonVerse->numero_tour,
+                'date_debut_tour' => $prochainTourNonVerse->date_prevue,
+                'membres_manquants' => [],
+            ]);
+        }
+
         $idsDejaPayes = $sol->cotisations()
-            ->where('tour_numero', $prochainTour->numero_tour)
+            ->where('tour_numero', $prochainTourNonVerse->numero_tour)
             ->pluck('membre_id');
 
         $membresManquants = $sol->membres()
             ->whereNotIn('id', $idsDejaPayes)
             ->get();
 
+        $periodeTerminee = $prochainTourNonVerse->date_fin_prevue
+            && Carbon::parse($prochainTourNonVerse->date_fin_prevue)->lt(now());
+
         return response()->json([
-            'tour_numero' => $prochainTour->numero_tour,
+            'statut' => $periodeTerminee ? 'en_retard' : 'en_cours',
+            'tour_numero' => $prochainTourNonVerse->numero_tour,
             'membres_manquants' => $membresManquants,
         ]);
+    }
+
+    // GET /api/sols/{sol}/cotisations-par-tour
+    public function cotisationsParTour(Request $request, Sol $sol)
+    {
+        if ($sol->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Accès non autorisé.'], 403);
+        }
+
+        $membres = $sol->membres;
+
+        $tours = $sol->tours()->with('membreBeneficiaire')->orderBy('numero_tour')->get();
+
+        $cotisationsParTourEtMembre = $sol->cotisations()
+            ->get()
+            ->groupBy('tour_numero');
+
+        $resultat = $tours->map(function ($tour) use ($membres, $cotisationsParTourEtMembre) {
+            $cotisationsDuTour = $cotisationsParTourEtMembre->get($tour->numero_tour, collect());
+            $idsPayes = $cotisationsDuTour->pluck('membre_id');
+
+            $membresAvecStatut = $membres->map(function ($membre) use ($idsPayes, $cotisationsDuTour) {
+                $cotisation = $cotisationsDuTour->firstWhere('membre_id', $membre->id);
+                return [
+                    'id' => $membre->id,
+                    'nom' => $membre->nom,
+                    'a_paye' => $idsPayes->contains($membre->id),
+                    'date_paiement' => $cotisation?->date_paiement,
+                ];
+            });
+
+            return [
+                'numero_tour' => $tour->numero_tour,
+                'beneficiaire' => $tour->membreBeneficiaire?->nom,
+                'date_debut' => $tour->date_prevue,
+                'date_fin' => $tour->date_fin_prevue,
+                'statut' => $tour->statut,
+                'membres' => $membresAvecStatut,
+            ];
+        });
+
+        return response()->json($resultat);
     }
 }

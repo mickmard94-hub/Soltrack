@@ -29,28 +29,51 @@ function CotisationsManquantes() {
         ← Retour au détail du sol
       </Link>
 
-      <h1>Cotisations manquantes</h1>
+      <span className="hero-eyebrow">Suivi</span>
+      <h1 className="mt-1 mb-4">Cotisations manquantes</h1>
 
-      {donnees.tour_numero === null ? (
-        <p className="text-muted">Tous les tours de ce sol sont terminés.</p>
-      ) : (
-        <>
-          <p>Pour le tour n°{donnees.tour_numero} :</p>
-          {donnees.membres_manquants.length === 0 ? (
-            <div className="alert alert-success">
-              Tous les membres ont cotisé pour ce tour.
-            </div>
-          ) : (
-            <ul className="list-group">
-              {donnees.membres_manquants.map((membre) => (
-                <li className="list-group-item" key={membre.id}>
-                  {membre.nom}
-                </li>
-              ))}
-            </ul>
+      <div className="card">
+        <div className="card-body p-4">
+          {donnees.statut === 'termine' && (
+            <p className="text-muted mb-0">Tous les tours de ce sol sont terminés.</p>
           )}
-        </>
-      )}
+
+          {donnees.statut === 'pas_commence' && (
+            <p className="text-muted mb-0">
+              Le tour <span className="chiffre">n°{donnees.tour_numero}</span> n'a pas encore commencé
+              {donnees.date_debut_tour ? ` (début le ${donnees.date_debut_tour})` : ''}.
+              Les cotisations en attente s'afficheront ici dès son commencement.
+            </p>
+          )}
+
+          {(donnees.statut === 'en_cours' || donnees.statut === 'en_retard') && (
+            <>
+              <div className="d-flex align-items-center gap-2 mb-3">
+                <p className="mb-0">
+                  Pour le tour <span className="chiffre">n°{donnees.tour_numero}</span> :
+                </p>
+                {donnees.statut === 'en_retard' && (
+                  <span className="sceau sceau-retard">Période terminée</span>
+                )}
+              </div>
+              {donnees.membres_manquants.length === 0 ? (
+                <span className="sceau sceau-paye">Tous les membres ont cotisé</span>
+              ) : (
+                <div>
+                  {donnees.membres_manquants.map((membre) => (
+                    <div className="membre-ligne" key={membre.id}>
+                      <span>{membre.nom}</span>
+                      <span className={`sceau ${donnees.statut === 'en_retard' ? 'sceau-retard' : 'sceau-attente'}`}>
+                        {donnees.statut === 'en_retard' ? 'En retard' : 'En attente'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

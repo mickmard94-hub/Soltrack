@@ -17,6 +17,7 @@ const ListeMembres = lazy(() => import('./pages/ListeMembres'));
 const ModifierMembre = lazy(() => import('./pages/ModifierMembre'));
 const EnregistrerCotisation = lazy(() => import('./pages/EnregistrerCotisation'));
 const CotisationsManquantes = lazy(() => import('./pages/CotisationsManquantes'));
+const CotisationsParTour = lazy(() => import('./pages/CotisationsParTour'));
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
               <Route path="/sols/:id/membres/:membreId/modifier" element={<RouteProtegee><ModifierMembre /></RouteProtegee>} />
               <Route path="/sols/:id/cotisations/ajouter" element={<RouteProtegee><EnregistrerCotisation /></RouteProtegee>} />
               <Route path="/sols/:id/cotisations" element={<RouteProtegee><CotisationsManquantes /></RouteProtegee>} />
+              <Route path="/sols/:id/cotisations/par-tour" element={<RouteProtegee><CotisationsParTour /></RouteProtegee>} />
             </Routes>
           </Suspense>
         </div>

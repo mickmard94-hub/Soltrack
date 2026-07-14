@@ -35,11 +35,14 @@ function Connexion() {
   };
 
   return (
-    <div className="row justify-content-center">
+    <div className="row justify-content-center py-4">
       <div className="col-md-6 col-lg-5">
+        <div className="text-center mb-3">
+          <span className="hero-eyebrow">SolTrack</span>
+        </div>
         <div className="card">
           <div className="card-body p-4">
-            <h1 className="text-center mb-1">Content de vous revoir</h1>
+            <h1 className="text-center mb-1" style={{ fontSize: '1.8rem' }}>Content de vous revoir</h1>
             <p className="text-center text-muted mb-4">
               Connectez-vous pour retrouver vos sols.
             </p>
@@ -55,7 +58,7 @@ function Connexion() {
                   onChange={handleChange}
                   placeholder="exemple@email.com"
                 />
-                {erreurs.email && <div className="text-danger">{erreurs.email[0]}</div>}
+                {erreurs.email && <div className="text-danger small mt-1">{erreurs.email[0]}</div>}
               </div>
 
               <div className="mb-4">
@@ -67,15 +70,15 @@ function Connexion() {
                   value={form.password}
                   onChange={handleChange}
                 />
-                {erreurs.password && <div className="text-danger">{erreurs.password[0]}</div>}
+                {erreurs.password && <div className="text-danger small mt-1">{erreurs.password[0]}</div>}
               </div>
 
-              <button type="submit" className="btn btn-sol w-100">
+              <button type="submit" className="btn-sol w-100 border-0">
                 Se connecter
               </button>
             </form>
 
-            <p className="text-center mt-3 mb-0">
+            <p className="text-center mt-3 mb-0 small">
               Pas encore de compte ? <Link to="/inscription">S'inscrire</Link>
             </p>
           </div>

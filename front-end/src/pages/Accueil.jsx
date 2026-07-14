@@ -6,10 +6,13 @@ function Accueil() {
 
   if (user) {
     return (
-      <div>
-        <h1>Bon retour, {user.name} !</h1>
-        <p>Retrouvez vos sols et continuez à suivre vos cotisations en toute simplicité.</p>
-        <Link to="/sols" className="btn btn-sol">
+      <div className="py-4">
+        <span className="hero-eyebrow">Bon retour</span>
+        <h1 className="mt-2">{user.name}</h1>
+        <p className="text-muted mb-4" style={{ maxWidth: '32rem' }}>
+          Retrouvez vos sols et continuez à suivre vos cotisations en toute simplicité.
+        </p>
+        <Link to="/sols" className="btn-sol d-inline-block">
           Voir mes sols
         </Link>
       </div>
@@ -19,13 +22,13 @@ function Accueil() {
   return (
     <div>
       <div className="text-center py-5">
-        <h1 className="display-5">SolTrack</h1>
-        <p className="lead text-muted mb-4">
-          La gestion numérique des sols (tontines communautaires),<br />
-          simple, claire et sans conflit entre membres.
+        <span className="hero-eyebrow">Gestion de sols &middot; tontines communautaires</span>
+        <h1 className="display-5 mt-2">SolTrack</h1>
+        <p className="lead text-muted mb-4 mx-auto" style={{ maxWidth: '34rem' }}>
+          La gestion numérique des sols, simple, claire et sans conflit entre membres.
         </p>
         <div className="d-flex justify-content-center gap-3 flex-wrap">
-          <Link to="/inscription" className="btn btn-sol">
+          <Link to="/inscription" className="btn-sol d-inline-block">
             Créer mon compte
           </Link>
           <Link to="/connexion" className="btn btn-outline-secondary">
@@ -75,14 +78,17 @@ function Accueil() {
         </div>
       </div>
 
+      {/* Étapes réellement séquentielles : c'est le parcours dans l'ordre où
+          on utilise l'application, la numérotation encode donc une vraie info. */}
       <div className="row my-5">
         <div className="col-12 mb-4">
           <h2 className="text-center">Ce que vous pouvez faire</h2>
         </div>
         <div className="col-md-3 mb-3">
-          <div className="card h-100 text-center">
+          <div className="card h-100">
             <div className="card-body">
-              <h6 className="card-title">Créer un sol</h6>
+              <span className="etape-numero">01</span>
+              <h6 className="card-title mt-2">Créer un sol</h6>
               <p className="card-text small">
                 Nom, montant, fréquence et nombre de tours en quelques secondes.
               </p>
@@ -90,9 +96,10 @@ function Accueil() {
           </div>
         </div>
         <div className="col-md-3 mb-3">
-          <div className="card h-100 text-center">
+          <div className="card h-100">
             <div className="card-body">
-              <h6 className="card-title">Ajouter des membres</h6>
+              <span className="etape-numero">02</span>
+              <h6 className="card-title mt-2">Ajouter des membres</h6>
               <p className="card-text small">
                 Gérez qui participe et dans quel ordre chacun reçoit la cagnotte.
               </p>
@@ -100,9 +107,10 @@ function Accueil() {
           </div>
         </div>
         <div className="col-md-3 mb-3">
-          <div className="card h-100 text-center">
+          <div className="card h-100">
             <div className="card-body">
-              <h6 className="card-title">Suivre les cotisations</h6>
+              <span className="etape-numero">03</span>
+              <h6 className="card-title mt-2">Suivre les cotisations</h6>
               <p className="card-text small">
                 Enregistrez chaque paiement et repérez les retards en un coup d'œil.
               </p>
@@ -110,9 +118,10 @@ function Accueil() {
           </div>
         </div>
         <div className="col-md-3 mb-3">
-          <div className="card h-100 text-center">
+          <div className="card h-100">
             <div className="card-body">
-              <h6 className="card-title">Consulter le tableau de bord</h6>
+              <span className="etape-numero">04</span>
+              <h6 className="card-title mt-2">Consulter le tableau de bord</h6>
               <p className="card-text small">
                 Total collecté, prochain bénéficiaire, cotisations en attente.
               </p>
@@ -123,7 +132,7 @@ function Accueil() {
 
       <div className="text-center py-4">
         <h4>Prêt à simplifier la gestion de vos sols ?</h4>
-        <Link to="/inscription" className="btn btn-sol mt-2">
+        <Link to="/inscription" className="btn-dore d-inline-block mt-2">
           Créer mon compte gratuitement
         </Link>
       </div>
