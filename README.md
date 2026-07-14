@@ -7,8 +7,9 @@ Application web full-stack permettant à un responsable de sol de suivre les cot
 🌐 **Application en ligne** : https://soltrack-frontend.onrender.com
 🔌 **API en ligne** : https://soltrack-backend.onrender.com
 📦 **Dépôt GitHub** : https://github.com/mickmard94-hub/Soltrack
-
-🎥 **Vidéo de démonstration** (présentation + tests Selenium) : https://youtu.be/0Q3PheyyKzs
+🎥 **Vidéo de démonstration** (présentation du travail) : https://youtu.be/o1LiWUi3UjI?si=xb5GN97Y7aJE_CH6
+🎥 **Vidéo de démonstration** (tests Selenium) : https://youtu.be/0Q3PheyyKzs
+🎥 **Vidéo de démonstration** (tests Postman) : https://youtu.be/tOTmxbR4JwI
 
 ## Contexte
 
@@ -37,7 +38,6 @@ Le suivi manuel des sols (cahier papier, groupes WhatsApp, mémoire du responsab
 
 ## Structure du dépôt
 
-```
 Soltrack/
 ├── back-end/                     # API Laravel
 │   ├── app/
@@ -63,7 +63,6 @@ Soltrack/
 │
 ├── .gitignore
 └── README.md
-```
 
 ## Installation
 
