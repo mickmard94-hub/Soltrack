@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useLang } from '../contexts/LangContext';
 
-// Affiche une date ISO (YYYY-MM-DD) au format français JJ/MM/AAAA.
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   const [y, m, d] = dateStr.slice(0, 10).split('-');
   return `${d}/${m}/${y}`;
 }
 
-// Calcule la date de fin réelle du sol : date de début + (fréquence ×
-// nombre de tours) - 1 jour.
 function calculerDateFinSol(sol) {
   const joursParTour = sol.frequence === 'hebdomadaire' ? 7 : 30;
   const [annee, mois, jour] = sol.date_debut.slice(0, 10).split('-').map(Number);
@@ -20,6 +18,7 @@ function calculerDateFinSol(sol) {
 }
 
 function ListeSols() {
+  const { t } = useLang();
   const [sols, setSols] = useState([]);
   const [pageActuelle, setPageActuelle] = useState(1);
   const [dernierePagee, setDernierePagee] = useState(1);
@@ -45,33 +44,40 @@ function ListeSols() {
   }, []);
 
   if (chargement) {
-    return <p>Chargement...</p>;
+    return <p>{t('common.chargement')}</p>;
   }
 
   const sceauStatut = (statut) => {
-    if (statut === 'actif') return { classe: 'sceau-paye', label: 'Actif' };
-    return { classe: 'sceau-neutre', label: 'Clôturé' };
+    if (statut === 'actif') return { classe: 'sceau-paye', label: t('liste_sols.actif') };
+    return { classe: 'sceau-neutre', label: t('liste_sols.cloture') };
+  };
+
+  // La fréquence est stockée en base en français ('hebdomadaire' /
+  // 'mensuelle') : on la fait passer par la traduction avant affichage
+  // plutôt que de montrer le mot brut de la base de données.
+  const frequenceLabel = (frequence) => {
+    return frequence === 'hebdomadaire' ? t('creer_sol.hebdomadaire') : t('creer_sol.mensuelle');
   };
 
   return (
     <div>
       <Link to="/" className="btn btn-sm btn-outline-secondary mb-3">
-        ← Retour à l'accueil
+        {t('liste_sols.retour_accueil')}
       </Link>
 
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1>Mes sols</h1>
+        <h1>{t('liste_sols.titre')}</h1>
         <Link to="/sols/creer" className="btn-sol d-inline-block">
-          + Créer un sol
+          {t('liste_sols.creer_sol')}
         </Link>
       </div>
 
       {sols.length === 0 ? (
         <div className="card">
           <div className="card-body text-center py-5">
-            <p className="mb-3">Vous n'avez pas encore créé de sol.</p>
+            <p className="mb-3">{t('liste_sols.aucun_sol')}</p>
             <Link to="/sols/creer" className="btn-dore d-inline-block">
-              Créer mon premier sol
+              {t('liste_sols.premier_sol')}
             </Link>
           </div>
         </div>
@@ -88,22 +94,22 @@ function ListeSols() {
                   </div>
 
                   <div className="d-flex justify-content-between align-items-center mt-2 mb-1">
-                    <span className="text-muted small">Cotisation</span>
+                    <span className="text-muted small">{t('liste_sols.cotisation')}</span>
                     <span className="chiffre">{sol.montant_cotisation} HTG</span>
                   </div>
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <span className="text-muted small">Fréquence</span>
-                    <span className="text-capitalize">{sol.frequence}</span>
+                    <span className="text-muted small">{t('liste_sols.frequence')}</span>
+                    <span>{frequenceLabel(sol.frequence)}</span>
                   </div>
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <span className="text-muted small">Période</span>
+                    <span className="text-muted small">{t('liste_sols.periode')}</span>
                     <span className="small">
                       {formatDate(sol.date_debut)} → {formatDate(calculerDateFinSol(sol))}
                     </span>
                   </div>
 
                   <Link to={`/sols/${sol.id}`} className="btn btn-sol mt-auto align-self-start">
-                    Voir le sol
+                    {t('liste_sols.voir_sol')}
                   </Link>
                 </div>
               </div>
@@ -119,17 +125,17 @@ function ListeSols() {
             disabled={pageActuelle === 1}
             onClick={() => chargerSols(pageActuelle - 1)}
           >
-            Précédent
+            {t('liste_sols.precedent')}
           </button>
           <span className="align-self-center">
-            Page {pageActuelle} sur {dernierePagee}
+            {t('liste_sols.page')} {pageActuelle} {t('liste_sols.sur')} {dernierePagee}
           </span>
           <button
             className="btn btn-sm btn-outline-secondary"
             disabled={pageActuelle === dernierePagee}
             onClick={() => chargerSols(pageActuelle + 1)}
           >
-            Suivant
+            {t('liste_sols.suivant')}
           </button>
         </nav>
       )}

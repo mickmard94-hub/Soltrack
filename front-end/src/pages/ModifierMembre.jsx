@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useLang } from '../contexts/LangContext';
 
 function ModifierMembre() {
   const { id, membreId } = useParams();
   const navigate = useNavigate();
+  const { t } = useLang();
   const [erreurs, setErreurs] = useState({});
   const [erreurGenerale, setErreurGenerale] = useState('');
   const [chargement, setChargement] = useState(true);
@@ -70,17 +72,17 @@ function ModifierMembre() {
   };
 
   if (chargement) {
-    return <p>Chargement...</p>;
+    return <p>{t('common.chargement')}</p>;
   }
 
   return (
     <div className="row justify-content-center py-2">
       <div className="col-md-8 col-lg-6">
         <Link to={`/sols/${id}/membres`} className="btn btn-sm btn-outline-secondary mb-3">
-          ← Retour aux membres
+          {t('membres.retour_membres')}
         </Link>
-        <span className="hero-eyebrow">Membre</span>
-        <h1 className="mt-1 mb-4">Modifier le membre</h1>
+        <span className="hero-eyebrow">{t('membres.eyebrow')}</span>
+        <h1 className="mt-1 mb-4">{t('membres.modifier_titre')}</h1>
 
         <div className="card">
           <div className="card-body p-4">
@@ -90,7 +92,7 @@ function ModifierMembre() {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label className="form-label">Nom du membre</label>
+                <label className="form-label">{t('membres.nom_membre')}</label>
                 <input
                   type="text"
                   className="form-control"
@@ -102,7 +104,7 @@ function ModifierMembre() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Téléphone</label>
+                <label className="form-label">{t('membres.telephone')}</label>
                 <input
                   type="text"
                   className="form-control"
@@ -114,7 +116,7 @@ function ModifierMembre() {
               </div>
 
               <div className="mb-4">
-                <label className="form-label">Ordre de réception</label>
+                <label className="form-label">{t('membres.ordre_reception')}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -126,7 +128,7 @@ function ModifierMembre() {
                 />
                 <div className="form-text">
                   {nombreMembresActuel
-                    ? `Entre 1 et ${nombreMembresActuel}. Les membres entre l'ancienne et la nouvelle position décaleront automatiquement.`
+                    ? `${t('membres.position_aide_prefix')} ${nombreMembresActuel}. ${t('membres.position_aide_modif')}`
                     : ''}
                 </div>
                 {erreurs.ordre_reception && <div className="text-danger small mt-1">{erreurs.ordre_reception[0]}</div>}
@@ -134,10 +136,10 @@ function ModifierMembre() {
 
               <div className="d-flex gap-2">
                 <button type="submit" className="btn-sol border-0" disabled={envoi}>
-                  {envoi ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                  {envoi ? t('membres.enregistrement') : t('membres.enregistrer_modifications')}
                 </button>
                 <button type="button" className="btn btn-outline-secondary" onClick={handleAnnuler}>
-                  Annuler
+                  {t('membres.annuler')}
                 </button>
               </div>
             </form>

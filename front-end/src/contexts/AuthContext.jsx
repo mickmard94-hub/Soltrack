@@ -37,8 +37,14 @@ export function AuthProvider({ children }) {
     });
   };
 
+  // Permet aux pages (ex : Paramètres) de mettre à jour l'utilisateur
+  // affiché après une modification de profil, sans recharger la page.
+  const updateUser = (userData) => {
+    setUser(userData);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, chargement }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, chargement }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useLang } from '../contexts/LangContext';
 
 function AjouterMembre() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useLang();
   const [erreurs, setErreurs] = useState({});
   const [erreurGenerale, setErreurGenerale] = useState('');
   const [envoi, setEnvoi] = useState(false);
@@ -20,7 +22,6 @@ function AjouterMembre() {
       .then((response) => {
         const count = response.data.length;
         setNombreMembresActuel(count);
-        // Par défaut, on propose d'ajouter le membre à la toute fin de la file.
         setForm((precedent) => ({ ...precedent, ordre_reception: count + 1 }));
       })
       .catch((error) => {
@@ -67,10 +68,10 @@ function AjouterMembre() {
     <div className="row justify-content-center py-2">
       <div className="col-md-8 col-lg-6">
         <Link to={`/sols/${id}`} className="btn btn-sm btn-outline-secondary mb-3">
-          ← Retour au sol
+          {t('membres.retour_sol')}
         </Link>
-        <span className="hero-eyebrow">Membre</span>
-        <h1 className="mt-1 mb-4">Ajouter un membre</h1>
+        <span className="hero-eyebrow">{t('membres.eyebrow')}</span>
+        <h1 className="mt-1 mb-4">{t('membres.ajouter_titre')}</h1>
 
         {erreurGenerale && (
           <div className="alert alert-danger">{erreurGenerale}</div>
@@ -80,33 +81,33 @@ function AjouterMembre() {
           <div className="card-body p-4">
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label className="form-label">Nom du membre</label>
+                <label className="form-label">{t('membres.nom_membre')}</label>
                 <input
                   type="text"
                   className="form-control"
                   name="nom"
                   value={form.nom}
                   onChange={handleChange}
-                  placeholder="Ex : Marie Joseph"
+                  placeholder={t('membres.nom_placeholder')}
                 />
                 {erreurs.nom && <div className="text-danger small mt-1">{erreurs.nom[0]}</div>}
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Téléphone</label>
+                <label className="form-label">{t('membres.telephone')}</label>
                 <input
                   type="text"
                   className="form-control"
                   name="telephone"
                   value={form.telephone}
                   onChange={handleChange}
-                  placeholder="Ex : 3712 3456"
+                  placeholder={t('membres.telephone_placeholder')}
                 />
                 {erreurs.telephone && <div className="text-danger small mt-1">{erreurs.telephone[0]}</div>}
               </div>
 
               <div className="mb-4">
-                <label className="form-label">Position dans l'ordre de réception</label>
+                <label className="form-label">{t('membres.position')}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -118,18 +119,18 @@ function AjouterMembre() {
                 />
                 <div className="form-text">
                   {positionMax
-                    ? `Entre 1 et ${positionMax}. Si vous choisissez une position déjà prise, les membres suivants décaleront automatiquement d'un cran.`
-                    : 'Chargement...'}
+                    ? `${t('membres.position_aide_prefix')} ${positionMax}. ${t('membres.position_aide_ajout')}`
+                    : t('common.chargement')}
                 </div>
                 {erreurs.ordre_reception && <div className="text-danger small mt-1">{erreurs.ordre_reception[0]}</div>}
               </div>
 
               <div className="d-flex gap-2">
                 <button type="submit" className="btn-sol border-0" disabled={envoi}>
-                  {envoi ? 'Enregistrement...' : 'Enregistrer'}
+                  {envoi ? t('membres.enregistrement') : t('membres.enregistrer')}
                 </button>
                 <button type="button" className="btn btn-outline-secondary" onClick={handleAnnuler}>
-                  Annuler
+                  {t('membres.annuler')}
                 </button>
               </div>
             </form>

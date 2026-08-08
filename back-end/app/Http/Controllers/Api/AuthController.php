@@ -60,9 +60,6 @@ class AuthController extends Controller
     // POST /api/logout
     public function logout(Request $request)
     {
-        // CORRECTION : currentAccessToken() peut être null si la requête
-        // n'a pas été authentifiée via un vrai jeton Sanctum (cas rare en
-        // production, mais qui ne doit jamais faire planter le serveur).
         $request->user()->currentAccessToken()?->delete();
 
         return response()->json(null, 204);
@@ -72,5 +69,70 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user());
+    }
+
+    // PUT /api/user/profil
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+        ]);
+
+        $user->update($validated);
+
+        return response()->json($user);
+    }
+
+    // PUT /api/user/mot-de-passe
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Le mot de passe actuel est incorrect.'],
+            ]);
+        }
+
+        $user->update(['password' => Hash::make($validated['password'])]);
+
+        return response()->json(['message' => 'Mot de passe mis à jour.']);
+    }
+
+    // DELETE /api/user
+    public function destroyAccount(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (! Hash::check($validated['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Mot de passe incorrect.'],
+            ]);
+        }
+
+        // Supprime explicitement les sols (et par cascade membres/tours/
+        // cotisations) avant de supprimer le compte, pour garantir qu'aucune
+        // donnée orpheline ne reste, indépendamment de la configuration
+        // de cascade en base.
+        $user->sols()->each(function ($sol) {
+            $sol->delete();
+        });
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json(null, 204);
     }
 }

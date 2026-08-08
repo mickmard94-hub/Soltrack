@@ -1,12 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 
-// Quatre scènes originales, chacune liée à un vrai symbole du sol :
-// la roue des tours (mécanique du produit), le cercle de mains qui se
-// passent la cagnotte, les couleurs vives façon tap-tap, et le soleil
-// ("soley" en créole — jeu de mots avec "sol"). Aucune photo externe :
-// pas de risque de lien cassé, pas de poids réseau pour un public
-// mobile-first, et un lien direct avec le sujet plutôt qu'un décor
-// générique.
 const DUREE_SCENE_MS = 3 * 60 * 1000; // 3 minutes
 
 function SceneRoue() {
@@ -30,7 +23,7 @@ function SceneRoue() {
               cy={400 + 300 * Math.sin((angle * Math.PI) / 180)}
               r={i % 3 === 0 ? 22 : 12}
               fill={couleurs[i % couleurs.length]}
-              opacity="0.55"
+              opacity="0.32"
             />
           );
         })}
@@ -61,11 +54,11 @@ function SceneCercleMains() {
           return (
             <g key={i}>
               <line x1="400" y1="400" x2={cx} y2={cy} stroke="var(--trait)" strokeWidth="2" />
-              <circle cx={cx} cy={cy} r="28" fill={couleurs[i % couleurs.length]} opacity="0.5" />
+              <circle cx={cx} cy={cy} r="28" fill={couleurs[i % couleurs.length]} opacity="0.32" />
             </g>
           );
         })}
-        <circle cx="400" cy="400" r="46" fill="var(--dore)" opacity="0.85" />
+        <circle cx="400" cy="400" r="46" fill="var(--dore)" opacity="0.6" />
       </g>
     </svg>
   );
@@ -86,7 +79,7 @@ function SceneTapTap() {
             height="1200"
             transform="rotate(18 400 400)"
             fill={couleurs[i % couleurs.length]}
-            opacity="0.22"
+            opacity="0.16"
           />
         ))}
       </g>
@@ -117,13 +110,13 @@ function SceneSoley() {
               height="90"
               rx="2"
               fill="var(--dore)"
-              opacity="0.5"
+              opacity="0.32"
               transform={`rotate(${angle} 400 400)`}
             />
           );
         })}
       </g>
-      <circle cx="400" cy="400" r="90" fill="var(--corail)" opacity="0.5" />
+      <circle cx="400" cy="400" r="90" fill="var(--corail)" opacity="0.28" />
     </svg>
   );
 }
@@ -138,8 +131,6 @@ function ScenesDeFond() {
     reduireMouvement.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (reduireMouvement.current) {
-      // Respecte la préférence d'accessibilité : une seule scène fixe,
-      // aucune rotation automatique.
       return;
     }
 

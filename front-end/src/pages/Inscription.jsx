@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useLang } from '../contexts/LangContext';
 
 function Inscription() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useLang();
   const [erreurs, setErreurs] = useState({});
   const [form, setForm] = useState({
     name: '',
@@ -40,18 +42,18 @@ function Inscription() {
     <div className="row justify-content-center py-4">
       <div className="col-md-6 col-lg-5">
         <div className="text-center mb-3">
-          <span className="hero-eyebrow">SolTrack</span>
+          <span className="hero-eyebrow">{t('auth.eyebrow')}</span>
         </div>
         <div className="card">
           <div className="card-body p-4">
-            <h1 className="text-center mb-1" style={{ fontSize: '1.8rem' }}>Bienvenue sur SolTrack</h1>
+            <h1 className="text-center mb-1" style={{ fontSize: '1.8rem' }}>{t('auth.inscription_titre')}</h1>
             <p className="text-center text-muted mb-4">
-              Créez votre compte pour commencer à gérer vos sols en toute simplicité.
+              {t('auth.inscription_sous_titre')}
             </p>
 
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label className="form-label">Nom complet</label>
+                <label className="form-label">{t('auth.nom_complet')}</label>
                 <input
                   type="text"
                   className="form-control"
@@ -64,7 +66,7 @@ function Inscription() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Email</label>
+                <label className="form-label">{t('auth.email')}</label>
                 <input
                   type="email"
                   className="form-control"
@@ -77,7 +79,7 @@ function Inscription() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Mot de passe</label>
+                <label className="form-label">{t('auth.mot_de_passe')}</label>
                 <input
                   type="password"
                   className="form-control"
@@ -89,7 +91,7 @@ function Inscription() {
               </div>
 
               <div className="mb-4">
-                <label className="form-label">Confirmer le mot de passe</label>
+                <label className="form-label">{t('auth.confirmer_mot_de_passe')}</label>
                 <input
                   type="password"
                   className="form-control"
@@ -100,12 +102,12 @@ function Inscription() {
               </div>
 
               <button type="submit" className="btn-sol w-100 border-0">
-                Créer mon compte
+                {t('auth.creer_compte')}
               </button>
             </form>
 
             <p className="text-center mt-3 mb-0 small">
-              Déjà inscrit ? <Link to="/connexion">Se connecter</Link>
+              {t('auth.deja_inscrit')} <Link to="/connexion">{t('auth.se_connecter_lien')}</Link>
             </p>
           </div>
         </div>

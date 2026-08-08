@@ -1,6 +1,7 @@
-// Élément signature de SolTrack : représente littéralement la rotation
-// du sol (qui a déjà touché la cagnotte, qui touche maintenant, qui attend).
+import { useLang } from '../contexts/LangContext';
+
 function RoueDesTours({ tours }) {
+  const { t } = useLang();
   const size = 200;
   const center = size / 2;
   const radius = 78;
@@ -61,15 +62,15 @@ function RoueDesTours({ tours }) {
           })}
         </svg>
         <div className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center text-center px-4">
-          <span className="hero-eyebrow" style={{ fontSize: '0.65rem' }}>Prochain tour</span>
+          <span className="hero-eyebrow" style={{ fontSize: '0.65rem' }}>{t('roue.prochain_tour')}</span>
           <span className="fw-semibold" style={{ fontFamily: "'Bricolage Grotesque', sans-serif", color: 'var(--bleu-nuit)' }}>
             {tours[indexActuel]?.membre_beneficiaire?.nom || '—'}
           </span>
         </div>
       </div>
       <div className="d-flex gap-3 mt-2 small" style={{ color: 'var(--texte-muted)' }}>
-        <span><span className="membre-puce" style={{ width: 14, height: 14, background: 'var(--vert-paye)', border: 'none' }}></span> Versé</span>
-        <span><span className="membre-puce" style={{ width: 14, height: 14, background: 'var(--dore)', border: 'none' }}></span> En cours</span>
+        <span><span className="membre-puce" style={{ width: 14, height: 14, background: 'var(--vert-paye)', border: 'none' }}></span> {t('roue.verse')}</span>
+        <span><span className="membre-puce" style={{ width: 14, height: 14, background: 'var(--dore)', border: 'none' }}></span> {t('roue.en_cours')}</span>
       </div>
     </div>
   );

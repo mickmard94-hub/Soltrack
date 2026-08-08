@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useLang } from '../contexts/LangContext';
 
 function ListeMembres() {
   const { id } = useParams();
+  const { t } = useLang();
   const [membres, setMembres] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [modeEchange, setModeEchange] = useState(false);
@@ -29,7 +31,7 @@ function ListeMembres() {
 
   const handleSupprimer = (membre) => {
     const confirmation = window.confirm(
-      `Voulez-vous vraiment retirer "${membre.nom}" de ce sol ? Cette action est irréversible si des cotisations lui sont déjà liées.`
+      `${t('membres.confirmation_suppression')} "${membre.nom}" ${t('membres.confirmation_suppression_suite')}`
     );
 
     if (!confirmation) {
@@ -93,28 +95,28 @@ function ListeMembres() {
   };
 
   if (chargement) {
-    return <p>Chargement...</p>;
+    return <p>{t('common.chargement')}</p>;
   }
 
   return (
     <div>
       <Link to={`/sols/${id}`} className="btn btn-sm btn-outline-secondary mb-3">
-        ← Retour au détail du sol
+        {t('membres.retour_detail')}
       </Link>
 
       <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h1 className="mb-0">Membres du sol</h1>
+        <h1 className="mb-0">{t('membres.titre_liste')}</h1>
         <div className="d-flex gap-2">
           {membres.length >= 2 && (
             <button
               className={`btn btn-sm ${modeEchange ? 'btn-secondary' : 'btn-outline-secondary'}`}
               onClick={toggleModeEchange}
             >
-              {modeEchange ? 'Annuler l\'échange' : 'Échanger deux tours'}
+              {modeEchange ? t('membres.echanger_annuler') : t('membres.echanger')}
             </button>
           )}
           <Link to={`/sols/${id}/membres/ajouter`} className="btn-sol d-inline-block">
-            + Ajouter un membre
+            {t('detail_sol.ajouter_membre')}
           </Link>
         </div>
       </div>
@@ -123,7 +125,7 @@ function ListeMembres() {
         <div className="card mb-3">
           <div className="card-body">
             <p className="mb-2 small text-muted">
-              Sélectionnez deux membres pour échanger leurs tours (ordre de réception).
+              {t('membres.echange_consigne')}
             </p>
             {erreurEchange && <div className="alert alert-danger py-2 small">{erreurEchange}</div>}
             <button
@@ -131,7 +133,7 @@ function ListeMembres() {
               disabled={selection.length !== 2 || envoiEchange}
               onClick={handleEchanger}
             >
-              {envoiEchange ? 'Échange en cours...' : `Échanger (${selection.length}/2 sélectionnés)`}
+              {envoiEchange ? t('membres.echange_en_cours') : `${t('membres.echanger_bouton_prefix')} (${selection.length}/2 ${t('membres.echanger_bouton_suffix')})`}
             </button>
           </div>
         </div>
@@ -140,9 +142,9 @@ function ListeMembres() {
       {membres.length === 0 ? (
         <div className="card">
           <div className="card-body text-center py-5">
-            <p className="mb-3 text-muted">Aucun membre pour l'instant.</p>
+            <p className="mb-3 text-muted">{t('membres.aucun_membre')}</p>
             <Link to={`/sols/${id}/membres/ajouter`} className="btn-dore d-inline-block">
-              Ajouter le premier membre
+              {t('membres.premier_membre')}
             </Link>
           </div>
         </div>
@@ -180,13 +182,13 @@ function ListeMembres() {
                       to={`/sols/${id}/membres/${membre.id}/modifier`}
                       className="btn btn-sm btn-outline-primary"
                     >
-                      Modifier
+                      {t('membres.modifier')}
                     </Link>
                     <button
                       className="btn btn-sm btn-outline-danger"
                       onClick={() => handleSupprimer(membre)}
                     >
-                      Retirer
+                      {t('membres.retirer')}
                     </button>
                   </div>
                 )}

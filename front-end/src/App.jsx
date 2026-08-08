@@ -18,6 +18,9 @@ const ModifierMembre = lazy(() => import('./pages/ModifierMembre'));
 const EnregistrerCotisation = lazy(() => import('./pages/EnregistrerCotisation'));
 const CotisationsManquantes = lazy(() => import('./pages/CotisationsManquantes'));
 const CotisationsParTour = lazy(() => import('./pages/CotisationsParTour'));
+const Parametres = lazy(() => import('./pages/Parametres'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Avis = lazy(() => import('./pages/Avis'));
 
 function App() {
   return (
@@ -30,6 +33,9 @@ function App() {
               <Route path="/" element={<Accueil />} />
               <Route path="/inscription" element={<Inscription />} />
               <Route path="/connexion" element={<Connexion />} />
+              <Route path="/parametres" element={<Parametres />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/avis" element={<Avis />} />
 
               <Route path="/sols" element={<RouteProtegee><ListeSols /></RouteProtegee>} />
               <Route path="/sols/creer" element={<RouteProtegee><CreerSol /></RouteProtegee>} />

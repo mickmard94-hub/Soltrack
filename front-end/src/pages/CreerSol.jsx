@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useLang } from '../contexts/LangContext';
 
 function CreerSol() {
   const navigate = useNavigate();
+  const { t } = useLang();
   const [erreurs, setErreurs] = useState({});
   const [envoi, setEnvoi] = useState(false);
   const [form, setForm] = useState({
@@ -44,27 +46,27 @@ function CreerSol() {
   return (
     <div className="row justify-content-center py-2">
       <div className="col-md-8 col-lg-6">
-        <span className="hero-eyebrow">Nouveau sol</span>
-        <h1 className="mt-1 mb-4">Créer un sol</h1>
+        <span className="hero-eyebrow">{t('creer_sol.eyebrow')}</span>
+        <h1 className="mt-1 mb-4">{t('creer_sol.titre')}</h1>
 
         <div className="card">
           <div className="card-body p-4">
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label className="form-label">Nom du sol</label>
+                <label className="form-label">{t('creer_sol.nom_sol')}</label>
                 <input
                   type="text"
                   className="form-control"
                   name="nom"
                   value={form.nom}
                   onChange={handleChange}
-                  placeholder="Ex : Sol des voisines"
+                  placeholder={t('creer_sol.nom_placeholder')}
                 />
                 {erreurs.nom && <div className="text-danger small mt-1">{erreurs.nom[0]}</div>}
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Montant de cotisation (HTG)</label>
+                <label className="form-label">{t('creer_sol.montant')}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -77,20 +79,20 @@ function CreerSol() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Fréquence</label>
+                <label className="form-label">{t('creer_sol.frequence')}</label>
                 <select
                   className="form-select"
                   name="frequence"
                   value={form.frequence}
                   onChange={handleChange}
                 >
-                  <option value="hebdomadaire">Hebdomadaire</option>
-                  <option value="mensuelle">Mensuelle</option>
+                  <option value="hebdomadaire">{t('creer_sol.hebdomadaire')}</option>
+                  <option value="mensuelle">{t('creer_sol.mensuelle')}</option>
                 </select>
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Nombre de tours / participants</label>
+                <label className="form-label">{t('creer_sol.nombre_tours')}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -100,13 +102,13 @@ function CreerSol() {
                   placeholder="Ex : 10"
                 />
                 <div className="form-text">
-                  Ce nombre fixe aussi le nombre maximum de membres que ce sol pourra accueillir.
+                  {t('creer_sol.nombre_tours_aide')}
                 </div>
                 {erreurs.nombre_tours && <div className="text-danger small mt-1">{erreurs.nombre_tours[0]}</div>}
               </div>
 
               <div className="mb-4">
-                <label className="form-label">Date de début</label>
+                <label className="form-label">{t('creer_sol.date_debut')}</label>
                 <input
                   type="date"
                   className="form-control"
@@ -119,10 +121,10 @@ function CreerSol() {
 
               <div className="d-flex gap-2">
                 <button type="submit" className="btn-sol border-0" disabled={envoi}>
-                  {envoi ? 'Enregistrement...' : 'Enregistrer'}
+                  {envoi ? t('creer_sol.enregistrement') : t('creer_sol.enregistrer')}
                 </button>
                 <button type="button" className="btn btn-outline-secondary" onClick={handleAnnuler}>
-                  Annuler
+                  {t('creer_sol.annuler')}
                 </button>
               </div>
             </form>

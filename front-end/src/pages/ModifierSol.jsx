@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useLang } from '../contexts/LangContext';
 
 function ModifierSol() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useLang();
   const [erreurs, setErreurs] = useState({});
   const [chargement, setChargement] = useState(true);
   const [envoi, setEnvoi] = useState(false);
@@ -46,9 +48,7 @@ function ModifierSol() {
     e.preventDefault();
 
     if (form.statut === 'cloture') {
-      const confirmation = window.confirm(
-        'Clôturer ce sol empêchera tout nouvel ajout de membre ou de cotisation. Continuer ?'
-      );
+      const confirmation = window.confirm(t('modifier_sol.confirmation_cloture'));
       if (!confirmation) {
         return;
       }
@@ -79,14 +79,14 @@ function ModifierSol() {
   };
 
   if (chargement) {
-    return <p>Chargement...</p>;
+    return <p>{t('common.chargement')}</p>;
   }
 
   return (
     <div className="row justify-content-center py-2">
       <div className="col-md-8 col-lg-6">
-        <span className="hero-eyebrow">Modifier</span>
-        <h1 className="mt-1 mb-4">Modifier le sol</h1>
+        <span className="hero-eyebrow">{t('modifier_sol.eyebrow')}</span>
+        <h1 className="mt-1 mb-4">{t('modifier_sol.titre')}</h1>
 
         <div className="card">
           <div className="card-body p-4">
@@ -96,7 +96,7 @@ function ModifierSol() {
 
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label className="form-label">Nom du sol</label>
+                <label className="form-label">{t('modifier_sol.nom_sol')}</label>
                 <input
                   type="text"
                   className="form-control"
@@ -108,7 +108,7 @@ function ModifierSol() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Montant de cotisation (HTG)</label>
+                <label className="form-label">{t('modifier_sol.montant')}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -120,7 +120,7 @@ function ModifierSol() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Fréquence</label>
+                <label className="form-label">{t('modifier_sol.frequence')}</label>
                 <select
                   className="form-select"
                   name="frequence"
@@ -128,18 +128,18 @@ function ModifierSol() {
                   onChange={handleChange}
                   disabled={aDesTours}
                 >
-                  <option value="hebdomadaire">Hebdomadaire</option>
-                  <option value="mensuelle">Mensuelle</option>
+                  <option value="hebdomadaire">{t('modifier_sol.hebdomadaire')}</option>
+                  <option value="mensuelle">{t('modifier_sol.mensuelle')}</option>
                 </select>
                 {aDesTours && (
                   <div className="form-text text-muted">
-                    Non modifiable : des tours existent déjà avec ce calendrier.
+                    {t('modifier_sol.figee_calendrier')}
                   </div>
                 )}
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Nombre de tours / participants</label>
+                <label className="form-label">{t('modifier_sol.nombre_tours')}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -151,7 +151,7 @@ function ModifierSol() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Date de début</label>
+                <label className="form-label">{t('modifier_sol.date_debut')}</label>
                 <input
                   type="date"
                   className="form-control"
@@ -162,36 +162,36 @@ function ModifierSol() {
                 />
                 {aDesTours && (
                   <div className="form-text text-muted">
-                    Non modifiable : des tours existent déjà avec cette date.
+                    {t('modifier_sol.figee_date')}
                   </div>
                 )}
                 {erreurs.date_debut && <div className="text-danger small mt-1">{erreurs.date_debut[0]}</div>}
               </div>
 
               <div className="mb-4">
-                <label className="form-label">Statut</label>
+                <label className="form-label">{t('modifier_sol.statut')}</label>
                 <select
                   className="form-select"
                   name="statut"
                   value={form.statut}
                   onChange={handleChange}
                 >
-                  <option value="actif">Actif</option>
-                  <option value="cloture">Clôturé</option>
+                  <option value="actif">{t('modifier_sol.actif')}</option>
+                  <option value="cloture">{t('modifier_sol.cloture')}</option>
                 </select>
                 {form.statut === 'cloture' && (
                   <div className="form-text text-danger">
-                    Un sol clôturé n'accepte plus de nouveaux membres ni de nouvelles cotisations.
+                    {t('modifier_sol.cloture_aide')}
                   </div>
                 )}
               </div>
 
               <div className="d-flex gap-2">
                 <button type="submit" className="btn-sol border-0" disabled={envoi}>
-                  {envoi ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                  {envoi ? t('modifier_sol.enregistrement') : t('modifier_sol.enregistrer')}
                 </button>
                 <button type="button" className="btn btn-outline-secondary" onClick={handleAnnuler}>
-                  Annuler
+                  {t('modifier_sol.annuler')}
                 </button>
               </div>
             </form>

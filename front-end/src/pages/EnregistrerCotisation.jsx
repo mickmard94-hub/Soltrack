@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useLang } from '../contexts/LangContext';
 
 function EnregistrerCotisation() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useLang();
   const [membres, setMembres] = useState([]);
   const [chargementMembres, setChargementMembres] = useState(true);
   const [erreurs, setErreurs] = useState({});
@@ -67,10 +69,10 @@ function EnregistrerCotisation() {
     <div className="row justify-content-center py-2">
       <div className="col-md-8 col-lg-6">
         <Link to={`/sols/${id}`} className="btn btn-sm btn-outline-secondary mb-3">
-          ← Retour au sol
+          {t('membres.retour_sol')}
         </Link>
-        <span className="hero-eyebrow">Cotisation</span>
-        <h1 className="mt-1 mb-4">Enregistrer une cotisation</h1>
+        <span className="hero-eyebrow">{t('cotisations.eyebrow')}</span>
+        <h1 className="mt-1 mb-4">{t('cotisations.titre_enregistrer')}</h1>
 
         {erreurGenerale && (
           <div className="alert alert-danger">{erreurGenerale}</div>
@@ -80,14 +82,10 @@ function EnregistrerCotisation() {
           <div className="card-body p-4">
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label className="form-label">Membre</label>
+                <label className="form-label">{t('cotisations.membre')}</label>
                 {chargementMembres ? (
-                  // Empêche toute interaction avec le menu tant que la liste réelle
-                  // des membres n'est pas arrivée du serveur : évite de proposer un
-                  // menu vide ou périmé (source de confusion pour l'utilisateur,
-                  // et de faux échecs pour des tests automatisés trop rapides).
                   <select className="form-select" disabled>
-                    <option>Chargement des membres...</option>
+                    <option>{t('cotisations.chargement_membres')}</option>
                   </select>
                 ) : (
                   <select
@@ -96,7 +94,7 @@ function EnregistrerCotisation() {
                     value={form.membre_id}
                     onChange={handleChange}
                   >
-                    <option value="">-- Sélectionner un membre --</option>
+                    <option value="">{t('cotisations.selectionner_membre')}</option>
                     {membres.map((membre) => (
                       <option key={membre.id} value={membre.id}>{membre.nom}</option>
                     ))}
@@ -106,7 +104,7 @@ function EnregistrerCotisation() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Tour concerné</label>
+                <label className="form-label">{t('cotisations.tour_concerne')}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -119,7 +117,7 @@ function EnregistrerCotisation() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Montant (HTG)</label>
+                <label className="form-label">{t('cotisations.montant')}</label>
                 <input
                   type="number"
                   className="form-control"
@@ -132,24 +130,24 @@ function EnregistrerCotisation() {
               </div>
 
               <div className="mb-4">
-                <label className="form-label">Date de la cotisation</label>
+                <label className="form-label">{t('cotisations.date_cotisation')}</label>
                 <input
                   type="text"
                   className="form-control"
-                  value={`Aujourd'hui — ${aujourdhui}`}
+                  value={`${t('cotisations.aujourdhui')} — ${aujourdhui}`}
                   disabled
                 />
                 <div className="form-text">
-                  La date est toujours celle du jour d'enregistrement : elle ne peut ni être avancée ni reculée.
+                  {t('cotisations.date_aide')}
                 </div>
               </div>
 
               <div className="d-flex gap-2">
                 <button type="submit" className="btn-dore border-0" disabled={chargementMembres || envoi}>
-                  {envoi ? 'Enregistrement...' : 'Enregistrer'}
+                  {envoi ? t('cotisations.enregistrement') : t('cotisations.enregistrer')}
                 </button>
                 <button type="button" className="btn btn-outline-secondary" onClick={handleAnnuler}>
-                  Annuler
+                  {t('cotisations.annuler')}
                 </button>
               </div>
             </form>
