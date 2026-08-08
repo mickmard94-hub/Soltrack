@@ -1,10 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FaSun, FaMoon } from 'react-icons/fa6';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const estActif = (chemin) => location.pathname === chemin;
 
   const handleLogout = () => {
@@ -32,6 +35,16 @@ function Header() {
               Mes sols
             </Link>
           )}
+
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'}
+            title={theme === 'dark' ? 'Thème clair' : 'Thème sombre'}
+          >
+            {theme === 'dark' ? <FaSun size={15} /> : <FaMoon size={15} />}
+          </button>
 
           {user ? (
             <button className="btn btn-sm btn-outline-light" onClick={handleLogout}>

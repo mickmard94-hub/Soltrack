@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ScenesDeFond from '../components/ScenesDeFond';
 
 function Accueil() {
   const { user } = useAuth();
@@ -21,19 +22,22 @@ function Accueil() {
 
   return (
     <div>
-      <div className="text-center py-5">
-        <span className="hero-eyebrow">Gestion de sols &middot; tontines communautaires</span>
-        <h1 className="display-5 mt-2">SolTrack</h1>
-        <p className="lead text-muted mb-4 mx-auto" style={{ maxWidth: '34rem' }}>
-          La gestion numérique des sols, simple, claire et sans conflit entre membres.
-        </p>
-        <div className="d-flex justify-content-center gap-3 flex-wrap">
-          <Link to="/inscription" className="btn-sol d-inline-block">
-            Créer mon compte
-          </Link>
-          <Link to="/connexion" className="btn btn-outline-secondary">
-            J'ai déjà un compte
-          </Link>
+      <div className="hero-accueil">
+        <ScenesDeFond />
+        <div className="hero-accueil-contenu text-center py-5">
+          <span className="hero-eyebrow">Gestion de sols &middot; tontines communautaires</span>
+          <h1 className="display-5 mt-2">SolTrack</h1>
+          <p className="lead text-muted mb-4 mx-auto" style={{ maxWidth: '34rem' }}>
+            La gestion numérique des sols, simple, claire et sans conflit entre membres.
+          </p>
+          <div className="d-flex justify-content-center gap-3 flex-wrap">
+            <Link to="/inscription" className="btn-sol d-inline-block">
+              Créer mon compte
+            </Link>
+            <Link to="/connexion" className="btn btn-outline-secondary">
+              J'ai déjà un compte
+            </Link>
+          </div>
         </div>
       </div>
 

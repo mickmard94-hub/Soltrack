@@ -12,17 +12,24 @@ use Carbon\Carbon;
 
 class MembreController extends Controller
 {
-    // GET /api/sols/{sol}/membres
-    public function index(Sol $sol)
+    private function verifierProprietaire(Request $request, Sol $sol): void
     {
+        if ($sol->user_id !== $request->user()->id) {
+            abort(403, 'Accès non autorisé.');
+        }
+    }
+
+    // GET /api/sols/{sol}/membres
+    public function index(Request $request, Sol $sol)
+    {
+        $this->verifierProprietaire($request, $sol);
+
         return $sol->membres;
     }
 
     /**
      * Calcule la date de début réelle d'un tour à partir de son ordre et
-     * de la fréquence du sol (règle des dates liées à la réalité). Le
-     * calendrier d'un emplacement (numéro de tour) est fixe : seul le
-     * membre qui l'occupe peut changer.
+     * de la fréquence du sol.
      */
     private function calculerDatePrevue(Sol $sol, int $ordreReception)
     {
@@ -69,6 +76,8 @@ class MembreController extends Controller
     // sans jamais laisser de trou, quel que soit l'ordre d'ajout.
     public function store(Request $request, Sol $sol)
     {
+        $this->verifierProprietaire($request, $sol);
+
         if ($sol->statut === 'cloture') {
             return response()->json([
                 'message' => "Ce sol est clôturé, aucun nouveau membre ne peut y être ajouté.",
@@ -97,7 +106,12 @@ class MembreController extends Controller
             ], 422);
         }
 
-        $membre = DB::transaction(function () use ($sol, $validated, $position, $nombreMembresActuel) {
+        $membre = DB::transaction(function () use ($sol, $validated, $position) {
+            // Verrouille la ligne du sol pour toute la transaction : évite
+            // que deux ajouts simultanés ne calculent le même ordre_reception
+            // libre et créent un doublon (condition de course).
+            Sol::where('id', $sol->id)->lockForUpdate()->first();
+
             // Décale tous les membres à partir de la position choisie, en
             // partant du plus grand ordre pour ne jamais créer de doublon
             // transitoire.
@@ -128,12 +142,15 @@ class MembreController extends Controller
 
     // PUT /api/membres/{membre}
     // Déplacer un membre vers une nouvelle position décale automatiquement
-    // tous les membres compris entre l'ancienne et la nouvelle position,
-    // comme on réordonnerait une liste — jamais de trou, jamais de conflit
-    // à résoudre manuellement.
+    // tous les membres compris entre l'ancienne et la nouvelle position —
+    // SAUF quand un seul autre membre est concerné : dans ce cas précis,
+    // c'est un échange direct entre deux personnes, et on demande
+    // confirmation explicite (409) plutôt que de l'appliquer en silence.
     public function update(Request $request, Membre $membre)
     {
         $sol = $membre->sol;
+        $this->verifierProprietaire($request, $sol);
+
         $ancienOrdre = $membre->ordre_reception;
         $nombreMembresActuel = $sol->membres()->count();
 
@@ -155,7 +172,36 @@ class MembreController extends Controller
                 ], 422);
             }
 
+            // Détecte un échange direct à deux personnes : si un seul
+            // autre membre occupe la plage concernée, décaler
+            // silencieusement serait trompeur (ça reviendrait au même
+            // qu'un échange, mais sans le dire). On demande confirmation
+            // explicite via l'échange de tour plutôt que de l'appliquer
+            // tout seul.
+            $autresDansLaPlage = $sol->membres()
+                ->where('id', '!=', $membre->id)
+                ->whereBetween('ordre_reception', [$min, $max])
+                ->get();
+
+            if ($autresDansLaPlage->count() === 1) {
+                $conflit = $autresDansLaPlage->first();
+
+                return response()->json([
+                    'message' => "La position {$nouvelOrdre} est déjà occupée par {$conflit->nom}. Utilisez l'échange de tour pour confirmer la permutation.",
+                    'membre_id' => $conflit->id,
+                    'nom' => $conflit->nom,
+                    'ordre_reception' => $conflit->ordre_reception,
+                ], 409);
+            }
+
             DB::transaction(function () use ($sol, $membre, $ancienOrdre, $nouvelOrdre) {
+                // Libère d'abord la position actuelle du membre déplacé
+                // avec une valeur temporaire (-1, qui n'existe jamais
+                // réellement) pour ne jamais avoir deux membres avec le
+                // même ordre_reception en même temps, même le temps d'une
+                // seule requête SQL (contrainte unique en base).
+                $membre->update(['ordre_reception' => -1]);
+
                 if ($nouvelOrdre > $ancienOrdre) {
                     // Le membre avance : tout le monde entre son ancienne et
                     // sa nouvelle position recule d'un cran.
@@ -199,6 +245,8 @@ class MembreController extends Controller
     // précis, sans décaler qui que ce soit d'autre.
     public function echangerTour(Request $request, Sol $sol)
     {
+        $this->verifierProprietaire($request, $sol);
+
         if ($sol->statut === 'cloture') {
             return response()->json([
                 'message' => "Ce sol est clôturé, aucun échange de tour n'est plus possible.",
@@ -232,8 +280,12 @@ class MembreController extends Controller
         }
 
         DB::transaction(function () use ($membre1, $membre2, $tour1, $tour2, $ordre1, $ordre2) {
-            $membre1->update(['ordre_reception' => $ordre2]);
+            // Passe par une position temporaire pour éviter toute
+            // collision avec la contrainte unique (sol_id, ordre_reception)
+            // pendant l'échange des deux positions.
+            $membre1->update(['ordre_reception' => -1]);
             $membre2->update(['ordre_reception' => $ordre1]);
+            $membre1->update(['ordre_reception' => $ordre2]);
 
             $tour1?->update(['membre_beneficiaire_id' => $membre2->id]);
             $tour2?->update(['membre_beneficiaire_id' => $membre1->id]);
@@ -247,9 +299,11 @@ class MembreController extends Controller
     // DELETE /api/membres/{membre}
     // Retirer un membre laisse un trou dans la séquence : on referme
     // automatiquement la plage en décalant tous ceux qui suivent.
-    public function destroy(Membre $membre)
+    public function destroy(Request $request, Membre $membre)
     {
         $sol = $membre->sol;
+        $this->verifierProprietaire($request, $sol);
+
         $ordreRetire = $membre->ordre_reception;
         $nombreMembresActuel = $sol->membres()->count();
 
@@ -259,7 +313,7 @@ class MembreController extends Controller
             ], 422);
         }
 
-        DB::transaction(function () use ($sol, $membre, $ordreRetire) {
+        DB::transaction(function () use ($sol, $membre, $ordreRetire, $nombreMembresActuel) {
             $membre->delete();
 
             $suivants = $sol->membres()
@@ -274,9 +328,12 @@ class MembreController extends Controller
             }
 
             // Le dernier emplacement (qui n'a plus personne) est libéré.
+            // La colonne membre_beneficiaire_id est NOT NULL en base :
+            // on ne peut donc pas la mettre à null, il faut supprimer la
+            // ligne du tour devenu orphelin.
             Tour::where('sol_id', $sol->id)
-                ->where('numero_tour', $sol->membres()->count() + 1)
-                ->update(['membre_beneficiaire_id' => null]);
+                ->where('numero_tour', $nombreMembresActuel)
+                ->delete();
         });
 
         return response()->json(null, 204);

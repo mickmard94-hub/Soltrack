@@ -28,7 +28,7 @@ function CotisationsManquantes() {
       <Link to={`/sols/${id}`} className="btn btn-sm btn-outline-secondary mb-3">
         ← Retour au détail du sol
       </Link>
-
+      <br />
       <span className="hero-eyebrow">Suivi</span>
       <h1 className="mt-1 mb-4">Cotisations manquantes</h1>
 

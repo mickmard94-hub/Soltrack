@@ -8,6 +8,7 @@ function ModifierSol() {
   const [erreurs, setErreurs] = useState({});
   const [chargement, setChargement] = useState(true);
   const [envoi, setEnvoi] = useState(false);
+  const [aDesTours, setADesTours] = useState(false);
   const [form, setForm] = useState({
     nom: '',
     montant_cotisation: '',
@@ -28,6 +29,7 @@ function ModifierSol() {
           date_debut: response.data.date_debut,
           statut: response.data.statut,
         });
+        setADesTours(Boolean(response.data.tours && response.data.tours.length > 0));
         setChargement(false);
       })
       .catch((error) => {
@@ -62,7 +64,10 @@ function ModifierSol() {
       .catch((error) => {
         setEnvoi(false);
         if (error.response && error.response.status === 422) {
-          setErreurs(error.response.data.errors);
+          setErreurs(error.response.data.errors || {});
+          if (error.response.data.message) {
+            setErreurs((prev) => ({ ...prev, general: [error.response.data.message] }));
+          }
         } else {
           console.error('Erreur lors de la modification du sol :', error);
         }
@@ -85,6 +90,10 @@ function ModifierSol() {
 
         <div className="card">
           <div className="card-body p-4">
+            {erreurs.general && (
+              <div className="alert alert-danger">{erreurs.general[0]}</div>
+            )}
+
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label className="form-label">Nom du sol</label>
@@ -117,10 +126,16 @@ function ModifierSol() {
                   name="frequence"
                   value={form.frequence}
                   onChange={handleChange}
+                  disabled={aDesTours}
                 >
                   <option value="hebdomadaire">Hebdomadaire</option>
                   <option value="mensuelle">Mensuelle</option>
                 </select>
+                {aDesTours && (
+                  <div className="form-text text-muted">
+                    Non modifiable : des tours existent déjà avec ce calendrier.
+                  </div>
+                )}
               </div>
 
               <div className="mb-3">
@@ -143,7 +158,13 @@ function ModifierSol() {
                   name="date_debut"
                   value={form.date_debut}
                   onChange={handleChange}
+                  disabled={aDesTours}
                 />
+                {aDesTours && (
+                  <div className="form-text text-muted">
+                    Non modifiable : des tours existent déjà avec cette date.
+                  </div>
+                )}
                 {erreurs.date_debut && <div className="text-danger small mt-1">{erreurs.date_debut[0]}</div>}
               </div>
 

@@ -1,46 +1,110 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
-:root {
-  /* Palette SolTrack — carnet de cotisations */
-  --bleu-nuit: #12233F;      /* Ink Navy — texte, en-têtes */
-  --bleu-moyen: #2C4C7C;     /* Sol Blue — actions principales */
-  --dore: #C9962C;           /* Marigold — la cagnotte, l'argent */
-  --cotton: #F7F5F0;         /* fond chaud, esprit papier */
-  --vert-paye: #3F7A5D;      /* Cotisation Green — payé */
-  --rouge-retard: #B54A3A;   /* Retard Rust — en retard */
-  --gris-clair: #F2F2F2;
-  --trait: rgba(18, 35, 63, 0.1);
+/* ============================================================
+   THÈME — SolTrack
+   Sombre = expérience de référence (premium, "carnet lumineux").
+   Clair = alternative entièrement soignée, pas un mode dégradé.
+   Le header/footer restent en indigo foncé constant dans les deux
+   thèmes (identité de marque stable) — seul le contenu bascule.
+   ============================================================ */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Rôles historiques (noms conservés pour compatibilité, valeurs
+     redéfinies pour la nouvelle direction visuelle) */
+  --bleu-nuit: #F3F0E8;       /* texte fort sur fond sombre */
+  --bleu-moyen: #6C8CFF;      /* action principale — periwinkle vif */
+  --dore: #FFC94D;            /* la cagnotte, l'argent */
+  --cotton: #16213B;          /* puce / chip secondaire */
+  --vert-paye: #34D399;       /* payé / actif */
+  --rouge-retard: #FF6B6B;    /* en retard */
+  --gris-clair: #1B2740;
+  --trait: rgba(255, 255, 255, 0.10);
+
+  /* Surfaces */
+  --bg: #0B1120;
+  --surface: #131C33;
+  --surface-2: #1B2740;
+  --texte: #F3F0E8;
+  --texte-muted: rgba(243, 240, 232, 0.64);
+  --corail: #FF6B3D;
+  --ombre: rgba(0, 0, 0, 0.45);
+  --marque: #0B1120;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bleu-nuit: #10182B;
+  --bleu-moyen: #2C4C7C;
+  --dore: #B87800;
+  --cotton: #F3ECDD;
+  --vert-paye: #0E9A66;
+  --rouge-retard: #C43D3D;
+  --gris-clair: #F2EFE7;
+  --trait: rgba(16, 24, 43, 0.12);
+
+  --bg: #FBF7EF;
+  --surface: #FFFFFF;
+  --surface-2: #F6F1E6;
+  --texte: #10182B;
+  --texte-muted: rgba(16, 24, 43, 0.62);
+  --corail: #E14B22;
+  --ombre: rgba(16, 24, 43, 0.10);
+  --marque: #0E1730;
+}
+
+* {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: var(--cotton);
-  color: #1c2b3d;
+  background-color: var(--bg);
+  color: var(--texte);
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Fraunces', serif;
-  font-weight: 600;
-  color: var(--bleu-nuit);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  color: var(--texte);
   letter-spacing: -0.01em;
 }
 
 .chiffre {
   font-family: 'IBM Plex Mono', monospace;
   font-weight: 600;
-  color: var(--bleu-nuit);
+  color: var(--texte);
 }
 
-/* ===== En-tête ===== */
+a {
+  color: var(--bleu-moyen);
+}
+
+.text-muted {
+  color: var(--texte-muted) !important;
+}
+
+/* ===== En-tête (chrome fixe, indépendant du thème) ===== */
 .site-header {
-  background: var(--bleu-nuit);
+  background: var(--marque);
   padding: 1.1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .site-header .brand {
   color: #ffffff !important;
-  font-family: 'Fraunces', serif;
-  font-weight: 600;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
   font-size: 1.6rem;
   text-decoration: none;
   letter-spacing: -0.01em;
@@ -84,11 +148,38 @@ h1, h2, h3, h4, h5, h6 {
 .site-header .btn-outline-light:hover {
   background: var(--dore);
   border-color: var(--dore);
+  color: var(--marque) !important;
 }
 
-/* ===== Pied de page ===== */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--dore);
+  border-color: var(--dore);
+  color: var(--marque);
+  transform: rotate(20deg);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--dore);
+  outline-offset: 2px;
+}
+
+/* ===== Pied de page (chrome fixe, indépendant du thème) ===== */
 .site-footer {
-  background: var(--bleu-nuit);
+  background: var(--marque);
   padding: 1.75rem 0;
   margin-top: 4rem;
 }
@@ -98,7 +189,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .site-footer p.fw-bold {
-  font-family: 'Fraunces', serif;
+  font-family: 'Bricolage Grotesque', sans-serif;
   font-size: 1.1rem;
 }
 
@@ -160,7 +251,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-sol:hover {
-  background-color: #233d63;
+  background-color: var(--corail);
   color: white;
 }
 
@@ -171,17 +262,21 @@ h1, h2, h3, h4, h5, h6 {
 /* Bouton doré — actions liées à l'argent (enregistrer une cotisation, cagnotte) */
 .btn-dore {
   background-color: var(--dore);
-  color: white;
+  color: #10182B;
   border: none;
   border-radius: 8px;
   padding: 0.6rem 1.35rem;
-  font-weight: 500;
-  transition: background-color 0.15s ease;
+  font-weight: 600;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
 .btn-dore:hover {
-  background-color: #b3841f;
+  background-color: var(--corail);
   color: white;
+}
+
+.btn-dore:active {
+  transform: translateY(1px);
 }
 
 .card-body .btn-sol,
@@ -189,22 +284,49 @@ h1, h2, h3, h4, h5, h6 {
   align-self: flex-start;
 }
 
+.btn-outline-secondary,
+.btn-outline-primary,
+.btn-outline-danger {
+  border-color: var(--trait);
+  color: var(--texte);
+  background: transparent;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-primary:hover {
+  background: var(--bleu-moyen);
+  border-color: var(--bleu-moyen);
+  color: #fff;
+}
+
+.btn-outline-danger {
+  color: var(--rouge-retard);
+}
+
+.btn-outline-danger:hover {
+  background: var(--rouge-retard);
+  border-color: var(--rouge-retard);
+  color: #fff;
+}
+
 /* ===== Cartes ===== */
 .card {
+  background: var(--surface);
   border: 1px solid var(--trait);
   border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(18, 35, 63, 0.06);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px var(--ombre);
+  color: var(--texte);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(18, 35, 63, 0.09);
+  box-shadow: 0 10px 24px var(--ombre);
 }
 
 .card-title {
-  font-family: 'Fraunces', serif;
-  color: var(--bleu-nuit);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  color: var(--texte);
 }
 
 /* Numéro d'ordre — utilisé quand le contenu est réellement séquentiel
@@ -238,27 +360,27 @@ h1, h2, h3, h4, h5, h6 {
 
 .sceau-paye {
   color: var(--vert-paye);
-  background: rgba(63, 122, 93, 0.1);
+  background: rgba(52, 211, 153, 0.14);
 }
 
 .sceau-attente {
   color: var(--dore);
-  background: rgba(201, 150, 44, 0.1);
+  background: rgba(255, 201, 77, 0.14);
 }
 
 .sceau-retard {
   color: var(--rouge-retard);
-  background: rgba(181, 74, 58, 0.1);
+  background: rgba(255, 107, 107, 0.14);
 }
 
 .sceau-neutre {
-  color: #5b6b80;
-  background: rgba(18, 35, 63, 0.06);
+  color: var(--texte-muted);
+  background: var(--surface-2);
 }
 
 /* ===== Tableau de bord d'un sol ===== */
 .dashboard-hero {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--trait);
   border-radius: 18px;
   overflow: hidden;
@@ -266,13 +388,14 @@ h1, h2, h3, h4, h5, h6 {
 
 .dashboard-stat {
   padding: 1.1rem 1.3rem;
+  border-color: var(--trait) !important;
 }
 
 .dashboard-stat-label {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(18, 35, 63, 0.55);
+  color: var(--texte-muted);
   font-weight: 600;
 }
 
@@ -280,7 +403,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'IBM Plex Mono', monospace;
   font-weight: 600;
   font-size: 1.4rem;
-  color: var(--bleu-nuit);
+  color: var(--texte);
   margin-top: 0.15rem;
 }
 
@@ -294,7 +417,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .membre-ligne:hover {
-  background: rgba(18, 35, 63, 0.03);
+  background: var(--surface-2);
 }
 
 .membre-puce {
@@ -315,20 +438,75 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ===== Tableaux ===== */
 .table {
-  background-color: white;
+  background-color: var(--surface);
+  color: var(--texte);
   border-radius: 10px;
   overflow: hidden;
 }
 
 .table thead {
-  background-color: var(--bleu-nuit);
+  background-color: var(--marque);
   color: white;
+}
+
+.table td, .table th {
+  border-color: var(--trait) !important;
 }
 
 .list-group-item {
   border-radius: 8px !important;
   margin-bottom: 6px;
   border: 1px solid var(--trait) !important;
+  background: var(--surface) !important;
+  color: var(--texte) !important;
+}
+
+/* ===== Formulaires ===== */
+.form-control,
+.form-select {
+  background-color: var(--surface);
+  border: 1px solid var(--trait);
+  color: var(--texte);
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--surface);
+  border-color: var(--bleu-moyen);
+  color: var(--texte);
+  box-shadow: 0 0 0 0.2rem rgba(108, 140, 255, 0.25);
+}
+
+.form-control::placeholder {
+  color: var(--texte-muted);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  background-color: var(--surface-2);
+  color: var(--texte-muted);
+}
+
+.form-label {
+  color: var(--texte);
+  font-weight: 500;
+}
+
+.form-text {
+  color: var(--texte-muted);
+}
+
+/* ===== Alertes ===== */
+.alert-warning {
+  background: rgba(255, 201, 77, 0.14);
+  border: 1px solid rgba(255, 201, 77, 0.3);
+  color: var(--texte);
+}
+
+.alert-danger {
+  background: rgba(255, 107, 107, 0.14);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: var(--texte);
 }
 
 /* ===== Hero d'accueil ===== */
@@ -339,6 +517,15 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--dore);
+}
+
+/* ===== Focus clavier visible partout ===== */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--corail);
+  outline-offset: 2px;
 }
 
 /* ===== Responsive ===== */
@@ -378,5 +565,96 @@ form {
   .container {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+}
+
+/* ===== Scènes de fond animées — page d'accueil ===== */
+.hero-accueil {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+}
+
+.scenes-de-fond {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.scene-couche {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.8s ease;
+}
+
+.scene-visible {
+  opacity: 1;
+}
+
+.scene-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.scene-roue-rotation {
+  animation: tourner-lentement 90s linear infinite;
+}
+
+.scene-mains-pulse {
+  animation: respirer 6s ease-in-out infinite;
+}
+
+.scene-soley-rotation {
+  animation: tourner-lentement 60s linear infinite;
+}
+
+.scene-taptap-glisse {
+  animation: glisser-diagonale 40s linear infinite;
+}
+
+@keyframes tourner-lentement {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes respirer {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+@keyframes glisser-diagonale {
+  from { transform: translateX(0); }
+  to { transform: translateX(-140px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-roue-rotation,
+  .scene-mains-pulse,
+  .scene-soley-rotation,
+  .scene-taptap-glisse {
+    animation: none !important;
+  }
+
+  .scene-couche {
+    transition: none !important;
+  }
+}
+
+.hero-accueil-contenu {
+  position: relative;
+  z-index: 1;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  background: linear-gradient(180deg, transparent 0%, var(--surface) 92%);
+}
+
+@media (max-width: 576px) {
+  .hero-accueil {
+    border-radius: 16px;
   }
 }

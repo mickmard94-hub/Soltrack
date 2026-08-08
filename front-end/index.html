@@ -4,7 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>front-end</title>
+    <meta name="theme-color" content="#0B1120" />
+    <title>SolTrack</title>
+    <script>
+      // Applique le thème AVANT le premier rendu pour éviter le flash
+      // (une page sombre qui clignote en blanc une fraction de seconde
+      // au chargement casse l'effet "moderne" qu'on recherche).
+      (function () {
+        try {
+          var enregistre = localStorage.getItem('soltrack_theme');
+          var systemeClair = window.matchMedia('(prefers-color-scheme: light)').matches;
+          var theme = enregistre || (systemeClair ? 'light' : 'dark');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

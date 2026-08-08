@@ -13,10 +13,10 @@ function formatDate(dateStr) {
 // nombre de tours) - 1 jour.
 function calculerDateFinSol(sol) {
   const joursParTour = sol.frequence === 'hebdomadaire' ? 7 : 30;
-  const debut = new Date(sol.date_debut);
-  const fin = new Date(debut);
-  fin.setDate(fin.getDate() + joursParTour * sol.nombre_tours - 1);
-  return fin.toISOString().slice(0, 10);
+  const [annee, mois, jour] = sol.date_debut.slice(0, 10).split('-').map(Number);
+  const debutUTC = Date.UTC(annee, mois - 1, jour);
+  const finUTC = debutUTC + (joursParTour * sol.nombre_tours - 1) * 86400000;
+  return new Date(finUTC).toISOString().slice(0, 10);
 }
 
 function ListeSols() {

@@ -58,9 +58,22 @@ class SolController extends Controller
             'statut' => 'sometimes|required|in:actif,cloture',
         ]);
 
-        // On ne peut pas réduire le nombre de tours en dessous d'un ordre de
-        // réception déjà attribué à un membre existant : casserait la
-        // cohérence des tours déjà créés.
+        $aDesTours = $sol->tours()->exists();
+
+        if ($aDesTours) {
+            if (isset($validated['frequence']) && $validated['frequence'] !== $sol->frequence) {
+                return response()->json([
+                    'message' => "Impossible de changer la fréquence : des tours ont déjà été créés avec le calendrier actuel.",
+                ], 422);
+            }
+
+            if (isset($validated['date_debut']) && $validated['date_debut'] !== $sol->date_debut) {
+                return response()->json([
+                    'message' => "Impossible de changer la date de début : des tours ont déjà été créés avec cette date.",
+                ], 422);
+            }
+        }
+
         if (isset($validated['nombre_tours'])) {
             $ordreMax = $sol->membres()->max('ordre_reception');
             if ($ordreMax && $validated['nombre_tours'] < $ordreMax) {
@@ -110,8 +123,6 @@ class SolController extends Controller
         foreach ($toursNonVerses as $tour) {
             $aCommence = Carbon::parse($tour->date_prevue)->lte(now());
             if (!$aCommence) {
-                // Le tour n'a pas encore commencé : on attend simplement,
-                // aucune cotisation n'est comptée en attente ni en retard.
                 continue;
             }
 

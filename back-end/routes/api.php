@@ -23,6 +23,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('sols/{sol}/membres/echanger-tour', [MembreController::class, 'echangerTour']);
     Route::put('membres/{membre}', [MembreController::class, 'update']);
     Route::delete('membres/{membre}', [MembreController::class, 'destroy']);
-
+    
+    
     Route::post('cotisations', [CotisationController::class, 'store']);
+    Route::delete('cotisations/{cotisation}', [CotisationController::class, 'destroy']);
 });

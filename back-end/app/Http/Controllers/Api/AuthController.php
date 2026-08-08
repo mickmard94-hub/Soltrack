@@ -60,7 +60,10 @@ class AuthController extends Controller
     // POST /api/logout
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        // CORRECTION : currentAccessToken() peut être null si la requête
+        // n'a pas été authentifiée via un vrai jeton Sanctum (cas rare en
+        // production, mais qui ne doit jamais faire planter le serveur).
+        $request->user()->currentAccessToken()?->delete();
 
         return response()->json(null, 204);
     }

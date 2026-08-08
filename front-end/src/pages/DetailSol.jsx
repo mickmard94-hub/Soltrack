@@ -13,12 +13,10 @@ function formatDate(dateStr) {
 // Calcule la date de fin réelle du sol : date de début + (fréquence ×
 // nombre de tours) - 1 jour. Reflète la réalité même si tous les membres
 // (et donc tous les tours) n'ont pas encore été ajoutés.
-function calculerDateFinSol(sol) {
-  const joursParTour = sol.frequence === 'hebdomadaire' ? 7 : 30;
-  const debut = new Date(sol.date_debut);
-  const fin = new Date(debut);
-  fin.setDate(fin.getDate() + joursParTour * sol.nombre_tours - 1);
-  return fin.toISOString().slice(0, 10);
+function dateFinDuSol(sol) {
+  if (!sol.tours || sol.tours.length === 0) return null;
+  const dernierTour = sol.tours[sol.tours.length - 1];
+  return dernierTour.date_fin_prevue;
 }
 
 function DetailSol() {
@@ -88,7 +86,7 @@ function DetailSol() {
           <span className="hero-eyebrow">Tableau de bord</span>
           <h1 className="mb-0 mt-1">{sol.nom}</h1>
           <p className="text-muted small mb-0 mt-1">
-            Du {formatDate(sol.date_debut)} au {formatDate(calculerDateFinSol(sol))}
+            Du {formatDate(sol.date_debut)} au {formatDate(dateFinDuSol(sol)) || '—'}
           </p>
         </div>
         <div className="d-flex gap-2">
