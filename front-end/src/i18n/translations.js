@@ -282,6 +282,7 @@ export const translations = {
       merci_titre: 'Merci pour votre avis !',
       merci_texte: 'Vos réponses nous aident à améliorer Sòl Ansanm.',
       retour_accueil: "Retour à l'accueil",
+      multichoice_hint: 'Plusieurs choix possibles.',
     },
   },
 
@@ -568,6 +569,7 @@ export const translations = {
       merci_titre: 'Mèsi pou opinyon ou!',
       merci_texte: 'Repons ou yo ede nou amelyore Sòl Ansanm.',
       retour_accueil: 'Retounen nan akèy',
+      multichoice_hint: 'Ou ka chwazi plizyè.',
     },
   },
 
@@ -853,6 +855,7 @@ export const translations = {
       merci_titre: 'Thank you for your feedback!',
       merci_texte: 'Your answers help us improve Sòl Ansanm.',
       retour_accueil: 'Back to home',
+      multichoice_hint: 'Multiple choices allowed.',
     },
 
   },
@@ -1138,6 +1141,7 @@ export const translations = {
       merci_titre: '¡Gracias por tu opinión!',
       merci_texte: 'Tus respuestas nos ayudan a mejorar Sòl Ansanm.',
       retour_accueil: 'Volver al inicio',
+      multichoice_hint: 'Se permiten varias opciones.',
     },
   },
 };

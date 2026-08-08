@@ -22,31 +22,52 @@ function Avis() {
   const { user } = useAuth();
   const { t } = useLang();
 
-  const [reponses, setReponses] = useState({
-    aime: null,
-    meilleure_page: null,
-    page_a_ameliorer: null,
-    recommande: null,
-  });
+  const [aime, setAime] = useState(null);
+  const [meilleuresPages, setMeilleuresPages] = useState([]);
+  const [pagesAAmeliorer, setPagesAAmeliorer] = useState([]);
+  const [recommande, setRecommande] = useState(null);
+
   const [envoi, setEnvoi] = useState(false);
   const [envoye, setEnvoye] = useState(false);
+  const [erreur, setErreur] = useState(null);
 
-  const repondre = (question, valeur) => {
-    setReponses((r) => ({ ...r, [question]: valeur }));
+  const toggleMeilleurePage = (page) => {
+    setMeilleuresPages((actuel) =>
+      actuel.includes(page) ? actuel.filter((p) => p !== page) : [...actuel, page]
+    );
   };
 
-  const toutesRepondues = Object.values(reponses).every((v) => v !== null);
+  const togglePageAAmeliorer = (page) => {
+    setPagesAAmeliorer((actuel) =>
+      actuel.includes(page) ? actuel.filter((p) => p !== page) : [...actuel, page]
+    );
+  };
+
+  // Au moins UNE réponse suffit — on ne force personne à tout remplir.
+  const auMoinsUneReponse =
+    aime !== null || meilleuresPages.length > 0 || pagesAAmeliorer.length > 0 || recommande !== null;
 
   const handleEnvoyer = () => {
     setEnvoi(true);
-    api.post('/feedback', reponses)
+    setErreur(null);
+
+    api.post('/feedback', {
+      aime,
+      meilleures_pages: meilleuresPages,
+      pages_a_ameliorer: pagesAAmeliorer,
+      recommande,
+    })
       .then(() => {
         setEnvoi(false);
         setEnvoye(true);
       })
       .catch((error) => {
-        console.error('Erreur lors de l\'envoi de l\'avis :', error);
         setEnvoi(false);
+        if (error.response?.status === 422 && error.response.data.message) {
+          setErreur(error.response.data.message);
+        } else {
+          console.error('Erreur lors de l\'envoi de l\'avis :', error);
+        }
       });
   };
 
@@ -74,19 +95,21 @@ function Avis() {
         <Link to={user ? '/sols' : '/'} className="btn btn-sm btn-outline-secondary mb-3">
           ← {t('common.retour')}
         </Link>
-        <br />
+
         <span className="hero-eyebrow">{t('nav.parametres')}</span>
         <h1 className="mt-1 mb-2">{t('avis.titre')}</h1>
         <p className="text-muted mb-4">{t('avis.intro')}</p>
+
+        {erreur && <div className="alert alert-danger">{erreur}</div>}
 
         <div className="card mb-3">
           <div className="card-body">
             <h6 className="card-title mb-3">{t('avis.q1')}</h6>
             <div className="d-flex gap-2">
-              <BoutonChoix actif={reponses.aime === true} onClick={() => repondre('aime', true)}>
+              <BoutonChoix actif={aime === true} onClick={() => setAime(aime === true ? null : true)}>
                 {t('avis.oui')}
               </BoutonChoix>
-              <BoutonChoix actif={reponses.aime === false} onClick={() => repondre('aime', false)}>
+              <BoutonChoix actif={aime === false} onClick={() => setAime(aime === false ? null : false)}>
                 {t('avis.non')}
               </BoutonChoix>
             </div>
@@ -95,13 +118,14 @@ function Avis() {
 
         <div className="card mb-3">
           <div className="card-body">
-            <h6 className="card-title mb-3">{t('avis.q2')}</h6>
+            <h6 className="card-title mb-1">{t('avis.q2')}</h6>
+            <p className="text-muted small mb-3">{t('avis.multichoice_hint')}</p>
             <div className="d-flex flex-wrap gap-2">
               {PAGES.map((page) => (
                 <BoutonChoix
                   key={page}
-                  actif={reponses.meilleure_page === page}
-                  onClick={() => repondre('meilleure_page', page)}
+                  actif={meilleuresPages.includes(page)}
+                  onClick={() => toggleMeilleurePage(page)}
                 >
                   {t(`avis.page_${page}`)}
                 </BoutonChoix>
@@ -112,13 +136,14 @@ function Avis() {
 
         <div className="card mb-3">
           <div className="card-body">
-            <h6 className="card-title mb-3">{t('avis.q3')}</h6>
+            <h6 className="card-title mb-1">{t('avis.q3')}</h6>
+            <p className="text-muted small mb-3">{t('avis.multichoice_hint')}</p>
             <div className="d-flex flex-wrap gap-2">
               {PAGES.map((page) => (
                 <BoutonChoix
                   key={page}
-                  actif={reponses.page_a_ameliorer === page}
-                  onClick={() => repondre('page_a_ameliorer', page)}
+                  actif={pagesAAmeliorer.includes(page)}
+                  onClick={() => togglePageAAmeliorer(page)}
                 >
                   {t(`avis.page_${page}`)}
                 </BoutonChoix>
@@ -131,10 +156,10 @@ function Avis() {
           <div className="card-body">
             <h6 className="card-title mb-3">{t('avis.q4')}</h6>
             <div className="d-flex gap-2">
-              <BoutonChoix actif={reponses.recommande === true} onClick={() => repondre('recommande', true)}>
+              <BoutonChoix actif={recommande === true} onClick={() => setRecommande(recommande === true ? null : true)}>
                 {t('avis.oui')}
               </BoutonChoix>
-              <BoutonChoix actif={reponses.recommande === false} onClick={() => repondre('recommande', false)}>
+              <BoutonChoix actif={recommande === false} onClick={() => setRecommande(recommande === false ? null : false)}>
                 {t('avis.non')}
               </BoutonChoix>
             </div>
@@ -144,7 +169,7 @@ function Avis() {
         <button
           type="button"
           className="btn-dore border-0 w-100"
-          disabled={!toutesRepondues || envoi}
+          disabled={!auMoinsUneReponse || envoi}
           onClick={handleEnvoyer}
         >
           {envoi ? t('avis.envoi') : t('avis.envoyer')}
