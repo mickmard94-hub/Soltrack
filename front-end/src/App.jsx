@@ -21,6 +21,7 @@ const CotisationsParTour = lazy(() => import('./pages/CotisationsParTour'));
 const Parametres = lazy(() => import('./pages/Parametres'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Avis = lazy(() => import('./pages/Avis'));
+const Admin = lazy(() => import('./pages/Admin'));
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
               <Route path="/sols/:id/cotisations/ajouter" element={<RouteProtegee><EnregistrerCotisation /></RouteProtegee>} />
               <Route path="/sols/:id/cotisations" element={<RouteProtegee><CotisationsManquantes /></RouteProtegee>} />
               <Route path="/sols/:id/cotisations/par-tour" element={<RouteProtegee><CotisationsParTour /></RouteProtegee>} />
+              <Route path="/admin" element={<RouteProtegee><Admin /></RouteProtegee>} />
             </Routes>
           </Suspense>
         </div>

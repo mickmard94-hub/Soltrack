@@ -49,6 +49,15 @@ function Header() {
             </Link>
           )}
 
+          {user?.is_admin && (
+            <Link
+              className={`nav-link ${estActif('/admin') ? 'actif' : ''}`}
+              to="/admin"
+            >
+              Admin
+            </Link>
+          )}
+
           <button
             type="button"
             className="theme-toggle"
