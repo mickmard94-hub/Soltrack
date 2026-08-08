@@ -95,7 +95,7 @@ function Avis() {
         <Link to={user ? '/sols' : '/'} className="btn btn-sm btn-outline-secondary mb-3">
           ← {t('common.retour')}
         </Link>
-
+        <br />
         <span className="hero-eyebrow">{t('nav.parametres')}</span>
         <h1 className="mt-1 mb-2">{t('avis.titre')}</h1>
         <p className="text-muted mb-4">{t('avis.intro')}</p>
