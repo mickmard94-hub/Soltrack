@@ -103,6 +103,19 @@ export const translations = {
       enregistrement: 'Enregistrement...',
       enregistrer: 'Enregistrer',
       annuler: 'Annuler',
+      penalites_titre: 'Pénalités de retard (optionnel)',
+      penalites_activer: 'Activer les pénalités pour ce sol',
+      penalite_montant_base: 'Montant de base (HTG), dès le lendemain de la date limite',
+      palier10_titre: 'Palier à 10 jours de retard',
+      palier10_activer: 'Activer ce palier',
+      mode_doubler: 'Doubler le montant de base',
+      mode_ajouter: 'Ajouter un montant supplémentaire',
+      palier10_montant: 'Montant à ajouter (HTG)',
+      palier30_titre: 'Palier à 30 jours de retard',
+      palier30_activer: 'Activer ce palier',
+      palier30_montant: 'Montant à ajouter (HTG)',
+      palier30_mode_doubler: 'Tripler le montant de base',
+      verrouille_note: 'Configuration verrouillée : une pénalité a déjà été appliquée dans ce sol, ces règles ne peuvent plus être modifiées.',
     },
 
     liste_sols: {
@@ -284,6 +297,12 @@ export const translations = {
       retour_accueil: "Retour à l'accueil",
       multichoice_hint: 'Plusieurs choix possibles.',
     },
+
+    notifications: {
+      titre: 'Notifications',
+      aucune: 'Aucune notification pour le moment.',
+      tout_marquer_lu: 'Tout marquer comme lu',
+    },
   },
 
   ht: {
@@ -390,6 +409,19 @@ export const translations = {
       enregistrement: 'N ap anrejistre...',
       enregistrer: 'Anrejistre',
       annuler: 'Anile',
+      penalites_titre: 'Penalite reta (opsyonèl)',
+      penalites_activer: 'Aktive penalite pou sòl sa a',
+      penalite_montant_base: 'Montan debaz (HTG), apati landmen dat limit la',
+      palier10_titre: 'Palye 10 jou reta',
+      palier10_activer: 'Aktive palye sa a',
+      mode_doubler: 'Double montan debaz la',
+      mode_ajouter: 'Ajoute yon montan siplemantè',
+      palier10_montant: 'Montan pou ajoute (HTG)',
+      palier30_titre: 'Palye 30 jou reta',
+      palier30_activer: 'Aktive palye sa a',
+      palier30_montant: 'Montan pou ajoute (HTG)',
+      palier30_mode_doubler: 'Triple montan debaz la',
+      verrouille_note: 'Konfigirasyon vewouye: gen yon penalite ki deja aplike nan sòl sa a, règ sa yo pa ka chanje ankò.',
     },
 
     liste_sols: {
@@ -571,6 +603,12 @@ export const translations = {
       retour_accueil: 'Retounen nan akèy',
       multichoice_hint: 'Ou ka chwazi plizyè.',
     },
+
+    notifications: {
+      titre: 'Notifikasyon',
+      aucune: 'Pa gen notifikasyon pou kounye a.',
+      tout_marquer_lu: 'Make tout kòm li',
+    },
   },
 
   en: {
@@ -676,6 +714,19 @@ export const translations = {
       enregistrement: 'Saving...',
       enregistrer: 'Save',
       annuler: 'Cancel',
+      penalites_titre: 'Late penalties (optional)',
+      penalites_activer: 'Enable penalties for this sol',
+      penalite_montant_base: 'Base amount (HTG), starting the day after the deadline',
+      palier10_titre: '10-day late tier',
+      palier10_activer: 'Enable this tier',
+      mode_doubler: 'Double the base amount',
+      mode_ajouter: 'Add an extra amount',
+      palier10_montant: 'Amount to add (HTG)',
+      palier30_titre: '30-day late tier',
+      palier30_activer: 'Enable this tier',
+      palier30_montant: 'Amount to add (HTG)',
+      palier30_mode_doubler: 'Triple the base amount',
+      verrouille_note: 'Configuration locked: a penalty has already been applied in this sol, these rules can no longer be changed.',
     },
 
     liste_sols: {
@@ -858,6 +909,11 @@ export const translations = {
       multichoice_hint: 'Multiple choices allowed.',
     },
 
+    notifications: {
+      titre: 'Notifications',
+      aucune: 'No notifications yet.',
+      tout_marquer_lu: 'Mark all as read',
+    },
   },
 
   es: {
@@ -964,6 +1020,19 @@ export const translations = {
       enregistrement: 'Guardando...',
       enregistrer: 'Guardar',
       annuler: 'Cancelar',
+      penalites_titre: 'Penalizaciones por retraso (opcional)',
+      penalites_activer: 'Activar penalizaciones para este sol',
+      penalite_montant_base: 'Monto base (HTG), desde el día siguiente a la fecha límite',
+      palier10_titre: 'Nivel de 10 días de retraso',
+      palier10_activer: 'Activar este nivel',
+      mode_doubler: 'Duplicar el monto base',
+      mode_ajouter: 'Añadir un monto adicional',
+      palier10_montant: 'Monto a añadir (HTG)',
+      palier30_titre: 'Nivel de 30 días de retraso',
+      palier30_activer: 'Activar este nivel',
+      palier30_montant: 'Monto a añadir (HTG)',
+      palier30_mode_doubler: 'Triplicar el monto base',
+      verrouille_note: 'Configuración bloqueada: ya se ha aplicado una penalización en este sol, estas reglas ya no se pueden modificar.',
     },
 
     liste_sols: {
@@ -1142,6 +1211,12 @@ export const translations = {
       merci_texte: 'Tus respuestas nos ayudan a mejorar Sòl Ansanm.',
       retour_accueil: 'Volver al inicio',
       multichoice_hint: 'Se permiten varias opciones.',
+    },
+
+    notifications: {
+      titre: 'Notificaciones',
+      aucune: 'Aún no hay notificaciones.',
+      tout_marquer_lu: 'Marcar todo como leído',
     },
   },
 };

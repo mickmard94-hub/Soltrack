@@ -25,6 +25,14 @@ class SolController extends Controller
             'frequence' => 'required|in:hebdomadaire,mensuelle',
             'nombre_tours' => 'required|integer|min:1',
             'date_debut' => 'required|date',
+            'penalites_actives' => 'sometimes|boolean',
+            'penalite_montant_base' => 'required_if:penalites_actives,true|nullable|numeric|min:0',
+            'penalite_palier10_actif' => 'sometimes|boolean',
+            'penalite_palier10_mode' => 'required_if:penalite_palier10_actif,true|nullable|in:doubler,ajouter',
+            'penalite_palier10_montant' => 'required_if:penalite_palier10_mode,ajouter|nullable|numeric|min:0',
+            'penalite_palier30_actif' => 'sometimes|boolean',
+            'penalite_palier30_mode' => 'required_if:penalite_palier30_actif,true|nullable|in:doubler,ajouter',
+            'penalite_palier30_montant' => 'required_if:penalite_palier30_mode,ajouter|nullable|numeric|min:0',
         ]);
 
         $sol = $request->user()->sols()->create($validated);
@@ -56,6 +64,14 @@ class SolController extends Controller
             'nombre_tours' => 'sometimes|required|integer|min:1',
             'date_debut' => 'sometimes|required|date',
             'statut' => 'sometimes|required|in:actif,cloture',
+            'penalites_actives' => 'sometimes|boolean',
+            'penalite_montant_base' => 'nullable|numeric|min:0',
+            'penalite_palier10_actif' => 'sometimes|boolean',
+            'penalite_palier10_mode' => 'nullable|in:doubler,ajouter',
+            'penalite_palier10_montant' => 'nullable|numeric|min:0',
+            'penalite_palier30_actif' => 'sometimes|boolean',
+            'penalite_palier30_mode' => 'nullable|in:doubler,ajouter',
+            'penalite_palier30_montant' => 'nullable|numeric|min:0',
         ]);
 
         $aDesTours = $sol->tours()->exists();
@@ -70,6 +86,24 @@ class SolController extends Controller
             if (isset($validated['date_debut']) && $validated['date_debut'] !== $sol->date_debut) {
                 return response()->json([
                     'message' => "Impossible de changer la date de début : des tours ont déjà été créés avec cette date.",
+                ], 422);
+            }
+        }
+
+        // Dès qu'une pénalité a été réellement appliquée à un membre de
+        // ce sol, toute la configuration des pénalités est figée pour
+        // toujours.
+        if ($sol->penalites_verrouillees) {
+            $champsPenalites = [
+                'penalites_actives', 'penalite_montant_base',
+                'penalite_palier10_actif', 'penalite_palier10_mode', 'penalite_palier10_montant',
+                'penalite_palier30_actif', 'penalite_palier30_mode', 'penalite_palier30_montant',
+            ];
+
+            $tentativeModification = array_intersect(array_keys($validated), $champsPenalites);
+            if (!empty($tentativeModification)) {
+                return response()->json([
+                    'message' => "La configuration des pénalités est verrouillée : une pénalité a déjà été appliquée dans ce sol et les règles ne peuvent plus être modifiées.",
                 ], 422);
             }
         }
