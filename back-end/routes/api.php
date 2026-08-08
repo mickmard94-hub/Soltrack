@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\SolController;
 use App\Http\Controllers\Api\MembreController;
 use App\Http\Controllers\Api\CotisationController;
 use App\Http\Controllers\Api\FeedbackController;
+use App\Http\Controllers\Api\AdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:6,1')->group(function () {
@@ -12,7 +13,6 @@ Route::middleware('throttle:6,1')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
 });
 
-// Accessible avec ou sans connexion, mais limité pour éviter le spam.
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('feedback', [FeedbackController::class, 'store']);
 });
@@ -37,4 +37,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('cotisations', [CotisationController::class, 'store']);
     Route::delete('cotisations/{cotisation}', [CotisationController::class, 'destroy']);
+
+    Route::post('admin/promouvoir', [AdminController::class, 'promouvoir']);
+    Route::get('admin/utilisateurs', [AdminController::class, 'utilisateurs']);
+    Route::get('admin/avis', [AdminController::class, 'avis']);
 });
