@@ -46,6 +46,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('admin/promouvoir', [AdminController::class, 'promouvoir']);
     Route::get('admin/utilisateurs', [AdminController::class, 'utilisateurs']);
+    Route::get('admin/utilisateurs/export', [AdminController::class, 'exportUtilisateursCsv']);
     Route::get('admin/avis', [AdminController::class, 'avis']);
+    Route::get('admin/avis/export', [AdminController::class, 'exportAvisCsv']);
     Route::delete('admin/reinitialiser', [AdminController::class, 'reinitialiserBaseDeDonnees']);
 });

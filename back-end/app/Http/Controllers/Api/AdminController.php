@@ -6,13 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Feedback;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminController extends Controller
 {
-    /**
-     * Vérifie que l'utilisateur connecté est bien administrateur.
-     * Centralisé ici pour ne jamais l'oublier sur une nouvelle route.
-     */
     private function verifierAdmin(Request $request): void
     {
         if (!$request->user()?->is_admin) {
@@ -21,10 +18,6 @@ class AdminController extends Controller
     }
 
     // POST /api/admin/promouvoir
-    // Transforme le compte connecté en administrateur, mais uniquement
-    // si le bon secret (défini côté serveur, jamais dans le code) est
-    // fourni. Ce secret n'existe que dans les variables d'environnement
-    // Render — personne d'autre que vous ne peut l'utiliser.
     public function promouvoir(Request $request)
     {
         $validated = $request->validate([
@@ -37,12 +30,6 @@ class AdminController extends Controller
             abort(403, 'Secret invalide.');
         }
 
-        // Affectation directe + save() plutôt que ->update([...]) :
-        // is_admin est volontairement absent de $fillable pour empêcher
-        // toute auto-promotion via un autre formulaire (comme la mise à
-        // jour du profil). Ici, c'est le seul chemin légitime et protégé
-        // par secret, donc on contourne cette protection explicitement,
-        // sans jamais passer par le mass assignment.
         $user = $request->user();
         $user->is_admin = true;
         $user->save();
@@ -53,7 +40,9 @@ class AdminController extends Controller
         ]);
     }
 
-    // GET /api/admin/utilisateurs
+    // GET /api/admin/utilisateurs?page=1
+    // Paginé côté serveur : même avec des millions d'utilisateurs, on
+    // ne charge jamais que 25 lignes à la fois, ni en base ni en mémoire.
     public function utilisateurs(Request $request)
     {
         $this->verifierAdmin($request);
@@ -61,25 +50,99 @@ class AdminController extends Controller
         return User::select('id', 'name', 'email', 'created_at')
             ->withCount('sols')
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(25);
     }
 
-    // GET /api/admin/avis
+    // GET /api/admin/avis?page=1
     public function avis(Request $request)
     {
         $this->verifierAdmin($request);
 
         return Feedback::with('user:id,name,email')
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(25);
+    }
+
+    // GET /api/admin/utilisateurs/export
+    // Génère un CSV en flux continu (streaming), lu par lots de 1000
+    // lignes depuis la base (cursor), sans jamais tout charger en
+    // mémoire d'un coup — indispensable si la table contient des
+    // millions de lignes.
+    public function exportUtilisateursCsv(Request $request): StreamedResponse
+    {
+        $this->verifierAdmin($request);
+
+        $nomFichier = 'utilisateurs_' . now()->format('Y-m-d_His') . '.csv';
+
+        return new StreamedResponse(function () {
+            $flux = fopen('php://output', 'w');
+
+            // BOM UTF-8 : indispensable pour qu'Excel affiche correctement
+            // les accents français/créoles à l'ouverture du fichier.
+            fwrite($flux, "\xEF\xBB\xBF");
+
+            fputcsv($flux, ['ID', 'Nom', 'Email', 'Sols créés', 'Inscrit le']);
+
+            User::select('id', 'name', 'email', 'created_at')
+                ->withCount('sols')
+                ->orderBy('id')
+                ->chunk(1000, function ($utilisateurs) use ($flux) {
+                    foreach ($utilisateurs as $u) {
+                        fputcsv($flux, [
+                            $u->id,
+                            $u->name,
+                            $u->email,
+                            $u->sols_count,
+                            $u->created_at?->format('d/m/Y H:i'),
+                        ]);
+                    }
+                });
+
+            fclose($flux);
+        }, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$nomFichier}\"",
+        ]);
+    }
+
+    // GET /api/admin/avis/export
+    public function exportAvisCsv(Request $request): StreamedResponse
+    {
+        $this->verifierAdmin($request);
+
+        $nomFichier = 'avis_' . now()->format('Y-m-d_His') . '.csv';
+
+        return new StreamedResponse(function () {
+            $flux = fopen('php://output', 'w');
+            fwrite($flux, "\xEF\xBB\xBF");
+
+            fputcsv($flux, ['ID', 'Aimé', 'Recommande', 'Meilleures pages', 'À améliorer', 'Utilisateur', 'Email', 'Date']);
+
+            Feedback::with('user:id,name,email')
+                ->orderBy('id')
+                ->chunk(1000, function ($avisLot) use ($flux) {
+                    foreach ($avisLot as $a) {
+                        fputcsv($flux, [
+                            $a->id,
+                            $a->aime === null ? '' : ($a->aime ? 'Oui' : 'Non'),
+                            $a->recommande === null ? '' : ($a->recommande ? 'Oui' : 'Non'),
+                            implode(', ', $a->meilleures_pages ?? []),
+                            implode(', ', $a->pages_a_ameliorer ?? []),
+                            $a->user?->name ?? 'Anonyme',
+                            $a->user?->email ?? '',
+                            $a->created_at?->format('d/m/Y H:i'),
+                        ]);
+                    }
+                });
+
+            fclose($flux);
+        }, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$nomFichier}\"",
+        ]);
     }
 
     // DELETE /api/admin/reinitialiser
-    // Vide toutes les tables de données (utilisateurs, sols, membres,
-    // tours, cotisations, avis) tout en gardant la structure de la
-    // base intacte. Protégé par le statut admin ET une phrase de
-    // confirmation tapée exactement, pour éviter tout clic accidentel
-    // sur une action aussi destructrice et irréversible.
     public function reinitialiserBaseDeDonnees(Request $request)
     {
         $this->verifierAdmin($request);
