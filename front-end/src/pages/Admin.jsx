@@ -43,6 +43,19 @@ function BarreProgression({ label, valeur }) {
   );
 }
 
+const LIBELLES_ACTIONS = {
+  inscription: 'Inscription',
+  connexion: 'Connexion',
+  deconnexion: 'Déconnexion',
+  modification_profil: 'Modification du profil',
+  changement_mot_de_passe: 'Changement de mot de passe',
+  suppression_compte: 'Suppression de compte',
+  promotion_admin: 'Promotion administrateur',
+  activation_2fa: 'Activation double authentification',
+  desactivation_2fa: 'Désactivation double authentification',
+  reinitialisation_base: 'Réinitialisation de la base de données',
+};
+
 function Admin() {
   const { user, updateUser, logout } = useAuth();
   const { t } = useLang();
@@ -59,10 +72,26 @@ function Admin() {
   const [erreurChargement, setErreurChargement] = useState(null);
   const [exportEnCours, setExportEnCours] = useState(null);
 
+  const [journal, setJournal] = useState([]);
+  const [pageJournal, setPageJournal] = useState(1);
+  const [dernierePageJournal, setDernierePageJournal] = useState(1);
+  const [totalJournal, setTotalJournal] = useState(0);
+
   const [zoneReinitOuverte, setZoneReinitOuverte] = useState(false);
   const [confirmationSaisie, setConfirmationSaisie] = useState('');
   const [reinitEnvoi, setReinitEnvoi] = useState(false);
   const [reinitErreur, setReinitErreur] = useState(null);
+
+  const chargerJournal = (page) => {
+    api.get(`/admin/journal?page=${page}`)
+      .then((response) => {
+        setJournal(response.data.data);
+        setPageJournal(response.data.current_page);
+        setDernierePageJournal(response.data.last_page);
+        setTotalJournal(response.data.total);
+      })
+      .catch((error) => console.error('Erreur journal :', error));
+  };
 
   const chargerTout = () => {
     setChargement(true);
@@ -71,11 +100,16 @@ function Admin() {
       api.get('/admin/statistiques'),
       api.get('/admin/utilisateurs/recents'),
       api.get('/admin/avis/recents'),
+      api.get('/admin/journal?page=1'),
     ])
-      .then(([reponseStats, reponseUsers, reponseAvis]) => {
+      .then(([reponseStats, reponseUsers, reponseAvis, reponseJournal]) => {
         setStats(reponseStats.data);
         setRecentsUtilisateurs(reponseUsers.data);
         setRecentsAvis(reponseAvis.data);
+        setJournal(reponseJournal.data.data);
+        setPageJournal(reponseJournal.data.current_page);
+        setDernierePageJournal(reponseJournal.data.last_page);
+        setTotalJournal(reponseJournal.data.total);
         setChargement(false);
       })
       .catch((error) => {
@@ -195,7 +229,7 @@ function Admin() {
       <Link to="/sols" className="btn btn-sm btn-outline-secondary mb-3">
         ← {t('common.retour')}
       </Link>
-      <br />
+
       <span className="hero-eyebrow">Administration</span>
       <h1 className="mt-1 mb-4">Vue d'ensemble</h1>
 
@@ -275,7 +309,7 @@ function Admin() {
           {exportEnCours === 'avis' ? 'Export...' : '⬇ Export CSV complet'}
         </button>
       </div>
-      <div className="card mb-5">
+      <div className="card mb-4">
         <div className="card-body px-4 py-2">
           {recentsAvis.length === 0 ? (
             <p className="text-muted small py-2 mb-0">Aucun avis pour l'instant.</p>
@@ -298,6 +332,60 @@ function Admin() {
           )}
         </div>
       </div>
+
+      {/* Journal d'audit */}
+      <div className="admin-section-entete">
+        <h6 className="mb-0">Journal d'audit ({totalJournal})</h6>
+      </div>
+      <div className="table-responsive-wrapper mb-2">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Utilisateur</th>
+              <th>Action</th>
+              <th>Entité</th>
+            </tr>
+          </thead>
+          <tbody>
+            {journal.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-muted small text-center py-3">Aucune entrée pour l'instant.</td>
+              </tr>
+            )}
+            {journal.map((entree) => (
+              <tr key={entree.id}>
+                <td className="small">{formatDateHeure(entree.created_at)}</td>
+                <td className="small">{entree.user ? entree.user.name : 'Système / inconnu'}</td>
+                <td className="small">{LIBELLES_ACTIONS[entree.action] || entree.action}</td>
+                <td className="small">{entree.entite}{entree.entite_id ? ` #${entree.entite_id}` : ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {dernierePageJournal > 1 && (
+        <nav className="d-flex justify-content-center gap-2 mb-5">
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            disabled={pageJournal === 1}
+            onClick={() => chargerJournal(pageJournal - 1)}
+          >
+            Précédent
+          </button>
+          <span className="align-self-center small">
+            Page {pageJournal} sur {dernierePageJournal}
+          </span>
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            disabled={pageJournal === dernierePageJournal}
+            onClick={() => chargerJournal(pageJournal + 1)}
+          >
+            Suivant
+          </button>
+        </nav>
+      )}
 
       <div className="card border-danger">
         <div className="card-body p-4">
