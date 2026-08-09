@@ -37,12 +37,20 @@ class AdminController extends Controller
             abort(403, 'Secret invalide.');
         }
 
-        // On met à jour explicitement, jamais via un tableau validé
-        // depuis la requête : évite tout risque d'escalade de
-        // privilèges accidentelle via un autre formulaire.
-        $request->user()->update(['is_admin' => true]);
+        // Affectation directe + save() plutôt que ->update([...]) :
+        // is_admin est volontairement absent de $fillable pour empêcher
+        // toute auto-promotion via un autre formulaire (comme la mise à
+        // jour du profil). Ici, c'est le seul chemin légitime et protégé
+        // par secret, donc on contourne cette protection explicitement,
+        // sans jamais passer par le mass assignment.
+        $user = $request->user();
+        $user->is_admin = true;
+        $user->save();
 
-        return response()->json(['message' => 'Compte promu administrateur.']);
+        return response()->json([
+            'message' => 'Compte promu administrateur.',
+            'user' => $user->fresh(),
+        ]);
     }
 
     // GET /api/admin/utilisateurs
@@ -64,5 +72,30 @@ class AdminController extends Controller
         return Feedback::with('user:id,name,email')
             ->orderByDesc('created_at')
             ->get();
+    }
+
+    // DELETE /api/admin/reinitialiser
+    // Vide toutes les tables de données (utilisateurs, sols, membres,
+    // tours, cotisations, avis) tout en gardant la structure de la
+    // base intacte. Protégé par le statut admin ET une phrase de
+    // confirmation tapée exactement, pour éviter tout clic accidentel
+    // sur une action aussi destructrice et irréversible.
+    public function reinitialiserBaseDeDonnees(Request $request)
+    {
+        $this->verifierAdmin($request);
+
+        $validated = $request->validate([
+            'confirmation' => 'required|string',
+        ]);
+
+        if ($validated['confirmation'] !== 'SUPPRIMER TOUT') {
+            abort(422, 'Phrase de confirmation incorrecte.');
+        }
+
+        \Illuminate\Support\Facades\DB::statement(
+            'TRUNCATE TABLE cotisations, tours, membres, sols, feedbacks, personal_access_tokens, users RESTART IDENTITY CASCADE;'
+        );
+
+        return response()->json(['message' => 'Base de données réinitialisée.']);
     }
 }
