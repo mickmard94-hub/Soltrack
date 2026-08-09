@@ -660,3 +660,92 @@ form {
     border-radius: 16px;
   }
 }
+
+/* ===== Admin — vue d'ensemble ===== */
+.admin-stat-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--trait);
+  border: 1px solid var(--trait);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.admin-stat-cellule {
+  background: var(--surface);
+  padding: 1.25rem 1.4rem;
+}
+
+.admin-stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texte-muted);
+  font-weight: 600;
+}
+
+.admin-stat-valeur {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 1.55rem;
+  color: var(--texte);
+  margin-top: 0.25rem;
+}
+
+.admin-stat-souligne {
+  font-size: 0.78rem;
+  color: var(--texte-muted);
+  margin-top: 0.15rem;
+}
+
+.barre-progression-ligne {
+  margin-bottom: 1rem;
+}
+
+.barre-progression-ligne:last-child {
+  margin-bottom: 0;
+}
+
+.barre-progression-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+}
+
+.barre-progression-piste {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.barre-progression-remplissage {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--dore);
+  transition: width 0.5s ease;
+}
+
+.admin-recent-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--trait);
+  gap: 1rem;
+}
+
+.admin-recent-item:last-child {
+  border-bottom: none;
+}
+
+.admin-section-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

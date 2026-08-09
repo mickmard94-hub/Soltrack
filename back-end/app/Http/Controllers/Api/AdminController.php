@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Sol;
 use App\Models\Feedback;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -40,32 +41,75 @@ class AdminController extends Controller
         ]);
     }
 
-    // GET /api/admin/utilisateurs?page=1
-    // Paginé côté serveur : même avec des millions d'utilisateurs, on
-    // ne charge jamais que 25 lignes à la fois, ni en base ni en mémoire.
-    public function utilisateurs(Request $request)
+    // GET /api/admin/statistiques
+    // Vue d'ensemble agrégée uniquement : aucune ligne individuelle
+    // n'est chargée, ce qui reste rapide même avec des millions
+    // d'enregistrements.
+    public function statistiques(Request $request)
+    {
+        $this->verifierAdmin($request);
+
+        $nombreUtilisateurs = User::count();
+        $nombreSols = Sol::count();
+        $premiereInscription = User::min('created_at');
+        $derniereInscription = User::max('created_at');
+
+        $totalAvis = Feedback::count();
+
+        $repondentAime = Feedback::whereNotNull('aime')->count();
+        $repondentRecommande = Feedback::whereNotNull('recommande')->count();
+        $repondentMeilleures = Feedback::whereNotNull('meilleures_pages')
+            ->whereRaw("json_array_length(meilleures_pages::json) > 0")
+            ->count();
+        $repondentAmeliorer = Feedback::whereNotNull('pages_a_ameliorer')
+            ->whereRaw("json_array_length(pages_a_ameliorer::json) > 0")
+            ->count();
+
+        $tauxPourcentage = fn ($repondent) => $totalAvis > 0
+            ? round(($repondent / $totalAvis) * 100, 1)
+            : 0;
+
+        return response()->json([
+            'nombre_utilisateurs' => $nombreUtilisateurs,
+            'nombre_sols' => $nombreSols,
+            'premiere_inscription' => $premiereInscription,
+            'derniere_inscription' => $derniereInscription,
+            'nombre_avis' => $totalAvis,
+            'taux_reponse' => [
+                'aime' => $tauxPourcentage($repondentAime),
+                'meilleures_pages' => $tauxPourcentage($repondentMeilleures),
+                'pages_a_ameliorer' => $tauxPourcentage($repondentAmeliorer),
+                'recommande' => $tauxPourcentage($repondentRecommande),
+            ],
+        ]);
+    }
+
+    // GET /api/admin/utilisateurs/recents
+    public function recentsUtilisateurs(Request $request)
     {
         $this->verifierAdmin($request);
 
         return User::select('id', 'name', 'email', 'created_at')
             ->withCount('sols')
             ->orderByDesc('created_at')
-            ->paginate(25);
+            ->limit(3)
+            ->get();
     }
 
-    // GET /api/admin/avis?page=1
-    public function avis(Request $request)
+    // GET /api/admin/avis/recents
+    public function recentsAvis(Request $request)
     {
         $this->verifierAdmin($request);
 
         return Feedback::with('user:id,name,email')
             ->orderByDesc('created_at')
-            ->paginate(25);
+            ->limit(3)
+            ->get();
     }
 
     // GET /api/admin/utilisateurs/export
     // Génère un CSV en flux continu (streaming), lu par lots de 1000
-    // lignes depuis la base (cursor), sans jamais tout charger en
+    // lignes depuis la base (chunk), sans jamais tout charger en
     // mémoire d'un coup — indispensable si la table contient des
     // millions de lignes.
     public function exportUtilisateursCsv(Request $request): StreamedResponse

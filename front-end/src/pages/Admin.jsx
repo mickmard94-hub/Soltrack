@@ -8,11 +8,16 @@ const PHRASE_CONFIRMATION = 'SUPPRIMER TOUT';
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  });
+}
+
+function formatDateHeure(dateStr) {
+  if (!dateStr) return '—';
   return new Date(dateStr).toLocaleString('fr-FR');
 }
 
-// Déclenche le téléchargement d'un fichier reçu en blob depuis l'API,
-// sans jamais afficher son contenu dans le navigateur.
 function telechargerBlob(blob, nomParDefaut) {
   const url = window.URL.createObjectURL(blob);
   const lien = document.createElement('a');
@@ -24,6 +29,20 @@ function telechargerBlob(blob, nomParDefaut) {
   window.URL.revokeObjectURL(url);
 }
 
+function BarreProgression({ label, valeur }) {
+  return (
+    <div className="barre-progression-ligne">
+      <div className="barre-progression-entete">
+        <span className="small">{label}</span>
+        <span className="chiffre small">{valeur}%</span>
+      </div>
+      <div className="barre-progression-piste">
+        <div className="barre-progression-remplissage" style={{ width: `${valeur}%` }}></div>
+      </div>
+    </div>
+  );
+}
+
 function Admin() {
   const { user, updateUser, logout } = useAuth();
   const { t } = useLang();
@@ -33,19 +52,11 @@ function Admin() {
   const [promotionErreur, setPromotionErreur] = useState(null);
   const [promotionEnvoi, setPromotionEnvoi] = useState(false);
 
-  const [utilisateurs, setUtilisateurs] = useState([]);
-  const [pageUtilisateurs, setPageUtilisateurs] = useState(1);
-  const [dernierePageUtilisateurs, setDernierePageUtilisateurs] = useState(1);
-  const [totalUtilisateurs, setTotalUtilisateurs] = useState(0);
-
-  const [avis, setAvis] = useState([]);
-  const [pageAvis, setPageAvis] = useState(1);
-  const [dernierePageAvis, setDernierePageAvis] = useState(1);
-  const [totalAvis, setTotalAvis] = useState(0);
-
+  const [stats, setStats] = useState(null);
+  const [recentsUtilisateurs, setRecentsUtilisateurs] = useState([]);
+  const [recentsAvis, setRecentsAvis] = useState([]);
   const [chargement, setChargement] = useState(false);
   const [erreurChargement, setErreurChargement] = useState(null);
-
   const [exportEnCours, setExportEnCours] = useState(null);
 
   const [zoneReinitOuverte, setZoneReinitOuverte] = useState(false);
@@ -53,58 +64,18 @@ function Admin() {
   const [reinitEnvoi, setReinitEnvoi] = useState(false);
   const [reinitErreur, setReinitErreur] = useState(null);
 
-  const chargerUtilisateurs = (page) => {
-    api.get(`/admin/utilisateurs?page=${page}`)
-      .then((response) => {
-        setUtilisateurs(response.data.data);
-        setPageUtilisateurs(response.data.current_page);
-        setDernierePageUtilisateurs(response.data.last_page);
-        setTotalUtilisateurs(response.data.total);
-      })
-      .catch((error) => {
-        if (error.response?.status === 403) {
-          setErreurChargement('Accès réservé aux administrateurs.');
-        } else {
-          console.error('Erreur admin :', error);
-        }
-      });
-  };
-
-  const chargerAvis = (page) => {
-    api.get(`/admin/avis?page=${page}`)
-      .then((response) => {
-        setAvis(response.data.data);
-        setPageAvis(response.data.current_page);
-        setDernierePageAvis(response.data.last_page);
-        setTotalAvis(response.data.total);
-      })
-      .catch((error) => {
-        if (error.response?.status === 403) {
-          setErreurChargement('Accès réservé aux administrateurs.');
-        } else {
-          console.error('Erreur admin :', error);
-        }
-      });
-  };
-
   const chargerTout = () => {
     setChargement(true);
     setErreurChargement(null);
     Promise.all([
-      api.get('/admin/utilisateurs?page=1'),
-      api.get('/admin/avis?page=1'),
+      api.get('/admin/statistiques'),
+      api.get('/admin/utilisateurs/recents'),
+      api.get('/admin/avis/recents'),
     ])
-      .then(([reponseUsers, reponseAvis]) => {
-        setUtilisateurs(reponseUsers.data.data);
-        setPageUtilisateurs(reponseUsers.data.current_page);
-        setDernierePageUtilisateurs(reponseUsers.data.last_page);
-        setTotalUtilisateurs(reponseUsers.data.total);
-
-        setAvis(reponseAvis.data.data);
-        setPageAvis(reponseAvis.data.current_page);
-        setDernierePageAvis(reponseAvis.data.last_page);
-        setTotalAvis(reponseAvis.data.total);
-
+      .then(([reponseStats, reponseUsers, reponseAvis]) => {
+        setStats(reponseStats.data);
+        setRecentsUtilisateurs(reponseUsers.data);
+        setRecentsAvis(reponseAvis.data);
         setChargement(false);
       })
       .catch((error) => {
@@ -181,9 +152,10 @@ function Admin() {
           <Link to="/sols" className="btn btn-sm btn-outline-secondary mb-3">
             ← {t('common.retour')}
           </Link>
-          <h1 className="mb-4">Administration</h1>
+          <span className="hero-eyebrow">Administration</span>
+          <h1 className="mt-1 mb-4">Accès administrateur</h1>
           <div className="card">
-            <div className="card-body">
+            <div className="card-body p-4">
               <p className="text-muted mb-3">
                 Ce compte n'est pas encore administrateur. Entrez le code secret pour l'activer.
               </p>
@@ -207,139 +179,128 @@ function Admin() {
     );
   }
 
+  if (chargement || !stats) {
+    return (
+      <div>
+        <Link to="/sols" className="btn btn-sm btn-outline-secondary mb-3">
+          ← {t('common.retour')}
+        </Link>
+        <p>{t('common.chargement')}</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Link to="/sols" className="btn btn-sm btn-outline-secondary mb-3">
         ← {t('common.retour')}
       </Link>
-      <h1 className="mb-4">Administration</h1>
+
+      <span className="hero-eyebrow">Administration</span>
+      <h1 className="mt-1 mb-4">Vue d'ensemble</h1>
 
       {erreurChargement && <div className="alert alert-danger">{erreurChargement}</div>}
-      {chargement && <p>{t('common.chargement')}</p>}
 
-      {/* Utilisateurs */}
-      <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-        <h5 className="mb-0">Utilisateurs ({totalUtilisateurs})</h5>
+      <div className="admin-stat-grille mb-4">
+        <div className="admin-stat-cellule">
+          <div className="admin-stat-label">Utilisateurs</div>
+          <div className="admin-stat-valeur">{stats.nombre_utilisateurs}</div>
+        </div>
+        <div className="admin-stat-cellule">
+          <div className="admin-stat-label">Sols créés</div>
+          <div className="admin-stat-valeur">{stats.nombre_sols}</div>
+        </div>
+        <div className="admin-stat-cellule">
+          <div className="admin-stat-label">Avis reçus</div>
+          <div className="admin-stat-valeur">{stats.nombre_avis}</div>
+        </div>
+        <div className="admin-stat-cellule">
+          <div className="admin-stat-label">Premier inscrit</div>
+          <div className="admin-stat-valeur" style={{ fontSize: '1.1rem' }}>{formatDate(stats.premiere_inscription)}</div>
+        </div>
+        <div className="admin-stat-cellule">
+          <div className="admin-stat-label">Dernier inscrit</div>
+          <div className="admin-stat-valeur" style={{ fontSize: '1.1rem' }}>{formatDate(stats.derniere_inscription)}</div>
+        </div>
+      </div>
+
+      <div className="card mb-4">
+        <div className="card-body p-4">
+          <h6 className="card-title mb-3">Taux de réponse par question</h6>
+          <BarreProgression label="A aimé son expérience" valeur={stats.taux_reponse.aime} />
+          <BarreProgression label="Meilleures pages désignées" valeur={stats.taux_reponse.meilleures_pages} />
+          <BarreProgression label="Pages à améliorer désignées" valeur={stats.taux_reponse.pages_a_ameliorer} />
+          <BarreProgression label="Recommanderait Sòl Ansanm" valeur={stats.taux_reponse.recommande} />
+        </div>
+      </div>
+
+      <div className="admin-section-entete">
+        <h6 className="mb-0">Derniers utilisateurs inscrits</h6>
         <button
           className="btn btn-sm btn-outline-secondary"
           onClick={() => exporterCsv('utilisateurs')}
-          disabled={exportEnCours === 'utilisateurs' || totalUtilisateurs === 0}
+          disabled={exportEnCours === 'utilisateurs' || stats.nombre_utilisateurs === 0}
         >
-          {exportEnCours === 'utilisateurs' ? 'Export en cours...' : '⬇ Exporter en CSV (Excel)'}
+          {exportEnCours === 'utilisateurs' ? 'Export...' : '⬇ Export CSV complet'}
         </button>
       </div>
-
-      <div className="table-responsive-wrapper mb-2">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nom</th>
-              <th>Email</th>
-              <th>Sols créés</th>
-              <th>Inscrit le</th>
-            </tr>
-          </thead>
-          <tbody>
-            {utilisateurs.map((u) => (
-              <tr key={u.id}>
-                <td className="chiffre">{u.id}</td>
-                <td>{u.name}</td>
-                <td>{u.email}</td>
-                <td className="chiffre">{u.sols_count}</td>
-                <td>{formatDate(u.created_at)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="card mb-4">
+        <div className="card-body px-4 py-2">
+          {recentsUtilisateurs.length === 0 ? (
+            <p className="text-muted small py-2 mb-0">Aucun utilisateur pour l'instant.</p>
+          ) : (
+            recentsUtilisateurs.map((u) => (
+              <div className="admin-recent-item" key={u.id}>
+                <div>
+                  <div className="fw-semibold">{u.name}</div>
+                  <div className="text-muted small">{u.email}</div>
+                </div>
+                <div className="text-end">
+                  <div className="chiffre small">{u.sols_count} sol{u.sols_count > 1 ? 's' : ''}</div>
+                  <div className="text-muted small">{formatDateHeure(u.created_at)}</div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      {dernierePageUtilisateurs > 1 && (
-        <nav className="d-flex justify-content-center gap-2 mb-4">
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={pageUtilisateurs === 1}
-            onClick={() => chargerUtilisateurs(pageUtilisateurs - 1)}
-          >
-            Précédent
-          </button>
-          <span className="align-self-center small">
-            Page {pageUtilisateurs} sur {dernierePageUtilisateurs}
-          </span>
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={pageUtilisateurs === dernierePageUtilisateurs}
-            onClick={() => chargerUtilisateurs(pageUtilisateurs + 1)}
-          >
-            Suivant
-          </button>
-        </nav>
-      )}
-
-      {/* Avis */}
-      <div className="d-flex justify-content-between align-items-center mb-2 mt-4 flex-wrap gap-2">
-        <h5 className="mb-0">Avis reçus ({totalAvis})</h5>
+      <div className="admin-section-entete">
+        <h6 className="mb-0">Derniers avis reçus</h6>
         <button
           className="btn btn-sm btn-outline-secondary"
           onClick={() => exporterCsv('avis')}
-          disabled={exportEnCours === 'avis' || totalAvis === 0}
+          disabled={exportEnCours === 'avis' || stats.nombre_avis === 0}
         >
-          {exportEnCours === 'avis' ? 'Export en cours...' : '⬇ Exporter en CSV (Excel)'}
+          {exportEnCours === 'avis' ? 'Export...' : '⬇ Export CSV complet'}
         </button>
       </div>
-
-      <div className="table-responsive-wrapper mb-2">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Aimé</th>
-              <th>Recommande</th>
-              <th>Meilleures pages</th>
-              <th>À améliorer</th>
-              <th>Utilisateur</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {avis.map((a) => (
-              <tr key={a.id}>
-                <td>{a.aime === null ? '—' : a.aime ? 'Oui' : 'Non'}</td>
-                <td>{a.recommande === null ? '—' : a.recommande ? 'Oui' : 'Non'}</td>
-                <td className="small">{(a.meilleures_pages || []).join(', ') || '—'}</td>
-                <td className="small">{(a.pages_a_ameliorer || []).join(', ') || '—'}</td>
-                <td className="small">{a.user ? `${a.user.name}` : 'Anonyme'}</td>
-                <td className="small">{formatDate(a.created_at)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="card mb-5">
+        <div className="card-body px-4 py-2">
+          {recentsAvis.length === 0 ? (
+            <p className="text-muted small py-2 mb-0">Aucun avis pour l'instant.</p>
+          ) : (
+            recentsAvis.map((a) => (
+              <div className="admin-recent-item" key={a.id} style={{ alignItems: 'flex-start' }}>
+                <div>
+                  <div className="d-flex gap-2 flex-wrap small mb-1">
+                    <span>Aimé : <strong>{a.aime === null ? '—' : a.aime ? 'Oui' : 'Non'}</strong></span>
+                    <span>&middot;</span>
+                    <span>Recommande : <strong>{a.recommande === null ? '—' : a.recommande ? 'Oui' : 'Non'}</strong></span>
+                  </div>
+                  <div className="text-muted small">
+                    {a.user ? a.user.name : 'Anonyme'}
+                  </div>
+                </div>
+                <div className="text-muted small text-end">{formatDateHeure(a.created_at)}</div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      {dernierePageAvis > 1 && (
-        <nav className="d-flex justify-content-center gap-2 mb-5">
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={pageAvis === 1}
-            onClick={() => chargerAvis(pageAvis - 1)}
-          >
-            Précédent
-          </button>
-          <span className="align-self-center small">
-            Page {pageAvis} sur {dernierePageAvis}
-          </span>
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={pageAvis === dernierePageAvis}
-            onClick={() => chargerAvis(pageAvis + 1)}
-          >
-            Suivant
-          </button>
-        </nav>
-      )}
-
-      {/* Zone très sensible */}
       <div className="card border-danger">
-        <div className="card-body">
+        <div className="card-body p-4">
           <h5 className="card-title text-danger mb-2">Zone très sensible</h5>
           <p className="text-muted small mb-3">
             Supprime définitivement TOUTES les données (utilisateurs, sols, membres, cotisations, avis).
