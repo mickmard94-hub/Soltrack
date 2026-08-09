@@ -22,4 +22,9 @@ class Feedback extends Model
         'meilleures_pages' => 'array',
         'pages_a_ameliorer' => 'array',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
