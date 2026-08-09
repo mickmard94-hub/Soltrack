@@ -52,6 +52,7 @@ const LIBELLES_ACTIONS = {
   changement_mot_de_passe: 'Changement de mot de passe',
   suppression_compte: 'Suppression de compte',
   promotion_admin: 'Promotion administrateur',
+  revocation_admin: 'Révocation administrateur',
   activation_2fa: 'Activation double authentification',
   desactivation_2fa: 'Désactivation double authentification',
   reinitialisation_base: 'Réinitialisation de la base de données',
@@ -78,6 +79,10 @@ function Admin() {
   const [dernierePageJournal, setDernierePageJournal] = useState(1);
   const [totalJournal, setTotalJournal] = useState(0);
 
+  const [admins, setAdmins] = useState([]);
+  const [revocationEnCours, setRevocationEnCours] = useState(null);
+  const [revocationErreur, setRevocationErreur] = useState(null);
+
   const [zoneReinitOuverte, setZoneReinitOuverte] = useState(false);
   const [confirmationSaisie, setConfirmationSaisie] = useState('');
   const [reinitEnvoi, setReinitEnvoi] = useState(false);
@@ -102,8 +107,9 @@ function Admin() {
       api.get('/admin/utilisateurs/recents'),
       api.get('/admin/avis/recents'),
       api.get('/admin/journal?page=1'),
+      api.get('/admin/administrateurs'),
     ])
-      .then(([reponseStats, reponseUsers, reponseAvis, reponseJournal]) => {
+      .then(([reponseStats, reponseUsers, reponseAvis, reponseJournal, reponseAdmins]) => {
         setStats(reponseStats.data);
         setRecentsUtilisateurs(reponseUsers.data);
         setRecentsAvis(reponseAvis.data);
@@ -111,6 +117,7 @@ function Admin() {
         setPageJournal(reponseJournal.data.current_page);
         setDernierePageJournal(reponseJournal.data.last_page);
         setTotalJournal(reponseJournal.data.total);
+        setAdmins(reponseAdmins.data);
         setChargement(false);
       })
       .catch((error) => {
@@ -144,6 +151,21 @@ function Admin() {
         setPromotionErreur(
           error.response?.data?.message || 'Secret invalide.'
         );
+      });
+  };
+
+  const revoquerAdmin = (utilisateurId) => {
+    setRevocationErreur(null);
+    setRevocationEnCours(utilisateurId);
+
+    api.delete(`/admin/revoquer/${utilisateurId}`)
+      .then(() => {
+        setAdmins((liste) => liste.filter((a) => a.id !== utilisateurId));
+        setRevocationEnCours(null);
+      })
+      .catch((error) => {
+        setRevocationEnCours(null);
+        setRevocationErreur(error.response?.data?.message || 'Erreur lors de la révocation.');
       });
   };
 
@@ -229,7 +251,6 @@ function Admin() {
       <Link to="/sols" className="btn btn-sm btn-outline-secondary mb-3">
         ← {t('common.retour')}
       </Link>
-      <br />
 
       <span className="hero-eyebrow">Administration</span>
       <h1 className="mt-1 mb-4">Vue d'ensemble</h1>
@@ -331,6 +352,36 @@ function Admin() {
               </div>
             ))
           )}
+        </div>
+      </div>
+
+      {/* Administrateurs actuels */}
+      <div className="admin-section-entete">
+        <h6 className="mb-0">Administrateurs ({admins.length} / 3)</h6>
+      </div>
+      <div className="card mb-4">
+        <div className="card-body px-4 py-2">
+          {revocationErreur && <div className="alert alert-danger py-2 my-2">{revocationErreur}</div>}
+          {admins.map((admin) => (
+            <div className="admin-recent-item" key={admin.id}>
+              <div>
+                <div className="fw-semibold">{admin.name}</div>
+                <div className="text-muted small">{admin.email}</div>
+              </div>
+              {admin.id !== user.id ? (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger"
+                  onClick={() => revoquerAdmin(admin.id)}
+                  disabled={revocationEnCours === admin.id}
+                >
+                  {revocationEnCours === admin.id ? '...' : 'Révoquer'}
+                </button>
+              ) : (
+                <span className="sceau sceau-paye">Vous</span>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 

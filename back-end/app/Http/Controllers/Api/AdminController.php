@@ -33,6 +33,21 @@ class AdminController extends Controller
         }
 
         $user = $request->user();
+
+        if ($user->is_admin) {
+            return response()->json(['message' => 'Ce compte est déjà administrateur.', 'user' => $user], 200);
+        }
+
+        // Limite volontaire à 3 administrateurs maximum, pour éviter
+        // qu'un secret partagé par erreur ne transforme un nombre
+        // incontrôlé de comptes en administrateurs.
+        $nombreAdminsActuels = User::where('is_admin', true)->count();
+        if ($nombreAdminsActuels >= 3) {
+            return response()->json([
+                'message' => "Le nombre maximum d'administrateurs (3) est déjà atteint. Un administrateur existant doit d'abord être révoqué.",
+            ], 422);
+        }
+
         $user->is_admin = true;
         $user->save();
 
@@ -42,6 +57,46 @@ class AdminController extends Controller
             'message' => 'Compte promu administrateur.',
             'user' => $user->fresh(),
         ]);
+    }
+
+    // DELETE /api/admin/revoquer/{utilisateur}
+    // Retire le statut administrateur d'un compte, pour libérer une
+    // place dans la limite des 3 admins maximum. Un admin ne peut pas
+    // se révoquer lui-même (évite de se retrouver bloqué sans admin
+    // du tout si c'est le seul).
+    public function revoquer(Request $request, User $utilisateur)
+    {
+        $this->verifierAdmin($request);
+
+        if ($utilisateur->id === $request->user()->id) {
+            return response()->json([
+                'message' => 'Vous ne pouvez pas révoquer vos propres droits administrateur.',
+            ], 422);
+        }
+
+        if (!$utilisateur->is_admin) {
+            return response()->json(['message' => 'Ce compte n\'est pas administrateur.'], 422);
+        }
+
+        $utilisateur->is_admin = false;
+        $utilisateur->save();
+
+        JournalAudit::enregistrer($request->user(), 'revocation_admin', 'User', $utilisateur->id, [
+            'email_revoque' => $utilisateur->email,
+        ]);
+
+        return response()->json(['message' => 'Statut administrateur révoqué.']);
+    }
+
+    // GET /api/admin/administrateurs
+    public function listeAdmins(Request $request)
+    {
+        $this->verifierAdmin($request);
+
+        return User::select('id', 'name', 'email')
+            ->where('is_admin', true)
+            ->orderBy('name')
+            ->get();
     }
 
     // GET /api/admin/statistiques
@@ -92,7 +147,7 @@ class AdminController extends Controller
     {
         $this->verifierAdmin($request);
 
-        return User::select('id', 'name', 'email', 'created_at')
+        return User::select('id', 'name', 'email', 'created_at', 'is_admin')
             ->withCount('sols')
             ->orderByDesc('created_at')
             ->limit(3)
@@ -124,8 +179,6 @@ class AdminController extends Controller
         return new StreamedResponse(function () {
             $flux = fopen('php://output', 'w');
 
-            // BOM UTF-8 : indispensable pour qu'Excel affiche correctement
-            // les accents français/créoles à l'ouverture du fichier.
             fwrite($flux, "\xEF\xBB\xBF");
 
             fputcsv($flux, ['ID', 'Nom', 'Email', 'Sols créés', 'Inscrit le']);

@@ -51,6 +51,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('notifications/tout-marquer-lu', [NotificationController::class, 'toutMarquerLu']);
 
     Route::post('admin/promouvoir', [AdminController::class, 'promouvoir']);
+    Route::delete('admin/revoquer/{utilisateur}', [AdminController::class, 'revoquer']);
+    Route::get('admin/administrateurs', [AdminController::class, 'listeAdmins']);
     Route::get('admin/statistiques', [AdminController::class, 'statistiques']);
     Route::get('admin/utilisateurs/recents', [AdminController::class, 'recentsUtilisateurs']);
     Route::get('admin/utilisateurs/export', [AdminController::class, 'exportUtilisateursCsv']);
