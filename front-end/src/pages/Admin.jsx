@@ -152,7 +152,6 @@ function Admin() {
           <Link to="/sols" className="btn btn-sm btn-outline-secondary mb-3">
             ← {t('common.retour')}
           </Link>
-          <br />
           <span className="hero-eyebrow">Administration</span>
           <h1 className="mt-1 mb-4">Accès administrateur</h1>
           <div className="card">
@@ -196,7 +195,7 @@ function Admin() {
       <Link to="/sols" className="btn btn-sm btn-outline-secondary mb-3">
         ← {t('common.retour')}
       </Link>
-
+      <br />
       <span className="hero-eyebrow">Administration</span>
       <h1 className="mt-1 mb-4">Vue d'ensemble</h1>
 
