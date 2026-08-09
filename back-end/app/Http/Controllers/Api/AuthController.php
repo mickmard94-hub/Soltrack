@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\JournalAudit;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -26,6 +29,8 @@ class AuthController extends Controller
         ]);
 
         $token = $user->createToken('soltrack')->plainTextToken;
+
+        JournalAudit::enregistrer($user, 'inscription', 'User', $user->id);
 
         return response()->json([
             'user' => $user,
@@ -49,7 +54,22 @@ class AuthController extends Controller
             ]);
         }
 
+        // Compte protégé par 2FA : on ne délivre pas de jeton final tout
+        // de suite. On enregistre une attente temporaire (5 min) et on
+        // demande le code de l'application d'authentification.
+        if ($user->two_factor_enabled) {
+            $jetonTemporaire = Str::random(40);
+            Cache::put("2fa_attente:{$jetonTemporaire}", $user->id, now()->addMinutes(5));
+
+            return response()->json([
+                'deux_facteurs_requis' => true,
+                'jeton_temporaire' => $jetonTemporaire,
+            ]);
+        }
+
         $token = $user->createToken('soltrack')->plainTextToken;
+
+        JournalAudit::enregistrer($user, 'connexion', 'User', $user->id);
 
         return response()->json([
             'user' => $user,
@@ -60,7 +80,10 @@ class AuthController extends Controller
     // POST /api/logout
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()?->delete();
+        $user = $request->user();
+        $user->currentAccessToken()?->delete();
+
+        JournalAudit::enregistrer($user, 'deconnexion', 'User', $user->id);
 
         return response()->json(null, 204);
     }
@@ -83,6 +106,8 @@ class AuthController extends Controller
 
         $user->update($validated);
 
+        JournalAudit::enregistrer($user, 'modification_profil', 'User', $user->id, $validated);
+
         return response()->json($user);
     }
 
@@ -104,6 +129,8 @@ class AuthController extends Controller
 
         $user->update(['password' => Hash::make($validated['password'])]);
 
+        JournalAudit::enregistrer($user, 'changement_mot_de_passe', 'User', $user->id);
+
         return response()->json(['message' => 'Mot de passe mis à jour.']);
     }
 
@@ -122,10 +149,8 @@ class AuthController extends Controller
             ]);
         }
 
-        // Supprime explicitement les sols (et par cascade membres/tours/
-        // cotisations) avant de supprimer le compte, pour garantir qu'aucune
-        // donnée orpheline ne reste, indépendamment de la configuration
-        // de cascade en base.
+        JournalAudit::enregistrer($user, 'suppression_compte', 'User', $user->id, ['email' => $user->email]);
+
         $user->sols()->each(function ($sol) {
             $sol->delete();
         });

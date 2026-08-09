@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Sol;
 use App\Models\Feedback;
+use App\Models\JournalAudit;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -34,6 +35,8 @@ class AdminController extends Controller
         $user = $request->user();
         $user->is_admin = true;
         $user->save();
+
+        JournalAudit::enregistrer($user, 'promotion_admin', 'User', $user->id);
 
         return response()->json([
             'message' => 'Compte promu administrateur.',
@@ -186,6 +189,16 @@ class AdminController extends Controller
         ]);
     }
 
+    // GET /api/admin/journal?page=1
+    public function journalAudit(Request $request)
+    {
+        $this->verifierAdmin($request);
+
+        return JournalAudit::with('user:id,name,email')
+            ->orderByDesc('created_at')
+            ->paginate(30);
+    }
+
     // DELETE /api/admin/reinitialiser
     public function reinitialiserBaseDeDonnees(Request $request)
     {
@@ -198,6 +211,8 @@ class AdminController extends Controller
         if ($validated['confirmation'] !== 'SUPPRIMER TOUT') {
             abort(422, 'Phrase de confirmation incorrecte.');
         }
+
+        JournalAudit::enregistrer($request->user(), 'reinitialisation_base', 'Systeme', null);
 
         \Illuminate\Support\Facades\DB::statement(
             'TRUNCATE TABLE cotisations, tours, membres, sols, feedbacks, personal_access_tokens, users RESTART IDENTITY CASCADE;'

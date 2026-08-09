@@ -7,11 +7,13 @@ use App\Http\Controllers\Api\CotisationController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:6,1')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('2fa/verifier-connexion', [TwoFactorController::class, 'verifierConnexion']);
 });
 
 Route::middleware('throttle:10,1')->group(function () {
@@ -24,6 +26,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('user/profil', [AuthController::class, 'updateProfile']);
     Route::put('user/mot-de-passe', [AuthController::class, 'updatePassword']);
     Route::delete('user', [AuthController::class, 'destroyAccount']);
+
+    Route::post('2fa/activer', [TwoFactorController::class, 'activer']);
+    Route::post('2fa/confirmer', [TwoFactorController::class, 'confirmer']);
+    Route::post('2fa/desactiver', [TwoFactorController::class, 'desactiver']);
 
     Route::apiResource('sols', SolController::class);
     Route::get('sols/{sol}/tableau-de-bord', [SolController::class, 'tableauDeBord']);
@@ -50,5 +56,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('admin/utilisateurs/export', [AdminController::class, 'exportUtilisateursCsv']);
     Route::get('admin/avis/recents', [AdminController::class, 'recentsAvis']);
     Route::get('admin/avis/export', [AdminController::class, 'exportAvisCsv']);
+    Route::get('admin/journal', [AdminController::class, 'journalAudit']);
     Route::delete('admin/reinitialiser', [AdminController::class, 'reinitialiserBaseDeDonnees']);
 });
