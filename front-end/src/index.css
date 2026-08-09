@@ -5,6 +5,7 @@
   --bleu-nuit: #F3F0E8;
   --bleu-moyen: #6C8CFF;
   --dore: #FFC94D;
+  --dore-texte: #FFC94D;
   --cotton: #16213B;
   --vert-paye: #34D399;
   --rouge-retard: #FF6B6B;
@@ -27,6 +28,7 @@
   --bleu-nuit: #10182B;
   --bleu-moyen: #2C4C7C;
   --dore: #B87800;
+  --dore-texte: #7A5200;
   --cotton: #F3ECDD;
   --vert-paye: #0E9A66;
   --rouge-retard: #C43D3D;
@@ -322,7 +324,7 @@ a {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--dore);
+  color: var(--dore-texte);
   letter-spacing: 0.05em;
 }
 
@@ -351,7 +353,7 @@ a {
 }
 
 .sceau-attente {
-  color: var(--dore);
+  color: var(--dore-texte);
   background: rgba(255, 201, 77, 0.14);
 }
 
@@ -503,7 +505,7 @@ a {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--dore);
+  color: var(--dore-texte);
 }
 
 /* ===== Focus clavier ===== */

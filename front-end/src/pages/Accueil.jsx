@@ -51,7 +51,7 @@ function Accueil() {
         <div className="col-md-4 mb-3">
           <div className="card h-100">
             <div className="card-body">
-              <h5 className="card-title">{t('accueil.probleme_titre')}</h5>
+              <h3 className="card-title" style={{ fontSize: '1.25rem' }}>{t('accueil.probleme_titre')}</h3>
               <p className="card-text">{t('accueil.probleme_texte')}</p>
             </div>
           </div>
@@ -59,7 +59,7 @@ function Accueil() {
         <div className="col-md-4 mb-3">
           <div className="card h-100">
             <div className="card-body">
-              <h5 className="card-title">{t('accueil.vision_titre')}</h5>
+              <h3 className="card-title" style={{ fontSize: '1.25rem' }}>{t('accueil.vision_titre')}</h3>
               <p className="card-text">{t('accueil.vision_texte')}</p>
             </div>
           </div>
@@ -67,7 +67,7 @@ function Accueil() {
         <div className="col-md-4 mb-3">
           <div className="card h-100">
             <div className="card-body">
-              <h5 className="card-title">{t('accueil.mobile_titre')}</h5>
+              <h3 className="card-title" style={{ fontSize: '1.25rem' }}>{t('accueil.mobile_titre')}</h3>
               <p className="card-text">{t('accueil.mobile_texte')}</p>
             </div>
           </div>
@@ -82,7 +82,7 @@ function Accueil() {
           <div className="card h-100">
             <div className="card-body">
               <span className="etape-numero">01</span>
-              <h6 className="card-title mt-2">{t('accueil.etape1_titre')}</h6>
+              <h3 className="card-title mt-2" style={{ fontSize: '1rem' }}>{t('accueil.etape1_titre')}</h3>
               <p className="card-text small">{t('accueil.etape1_texte')}</p>
             </div>
           </div>
@@ -91,7 +91,7 @@ function Accueil() {
           <div className="card h-100">
             <div className="card-body">
               <span className="etape-numero">02</span>
-              <h6 className="card-title mt-2">{t('accueil.etape2_titre')}</h6>
+              <h3 className="card-title mt-2" style={{ fontSize: '1rem' }}>{t('accueil.etape2_titre')}</h3>
               <p className="card-text small">{t('accueil.etape2_texte')}</p>
             </div>
           </div>
@@ -100,7 +100,7 @@ function Accueil() {
           <div className="card h-100">
             <div className="card-body">
               <span className="etape-numero">03</span>
-              <h6 className="card-title mt-2">{t('accueil.etape3_titre')}</h6>
+              <h3 className="card-title mt-2" style={{ fontSize: '1rem' }}>{t('accueil.etape3_titre')}</h3>
               <p className="card-text small">{t('accueil.etape3_texte')}</p>
             </div>
           </div>
@@ -109,7 +109,7 @@ function Accueil() {
           <div className="card h-100">
             <div className="card-body">
               <span className="etape-numero">04</span>
-              <h6 className="card-title mt-2">{t('accueil.etape4_titre')}</h6>
+              <h3 className="card-title mt-2" style={{ fontSize: '1rem' }}>{t('accueil.etape4_titre')}</h3>
               <p className="card-text small">{t('accueil.etape4_texte')}</p>
             </div>
           </div>
