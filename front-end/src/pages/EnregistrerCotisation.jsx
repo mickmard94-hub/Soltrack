@@ -71,6 +71,7 @@ function EnregistrerCotisation() {
         <Link to={`/sols/${id}`} className="btn btn-sm btn-outline-secondary mb-3">
           {t('membres.retour_sol')}
         </Link>
+        <br />
         <span className="hero-eyebrow">{t('cotisations.eyebrow')}</span>
         <h1 className="mt-1 mb-4">{t('cotisations.titre_enregistrer')}</h1>
 
