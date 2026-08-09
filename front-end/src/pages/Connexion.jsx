@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LangContext';
+import ChampMotDePasse from '../components/ChampMotDePasse';
 
 function Connexion() {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ function Connexion() {
     password: '',
   });
 
-  const [etape, setEtape] = useState('identifiants'); // 'identifiants' | 'code2fa'
+  const [etape, setEtape] = useState('identifiants');
   const [jetonTemporaire, setJetonTemporaire] = useState(null);
   const [code2fa, setCode2fa] = useState('');
   const [erreur2fa, setErreur2fa] = useState(null);
@@ -144,9 +145,7 @@ function Connexion() {
 
               <div className="mb-4">
                 <label className="form-label">{t('auth.mot_de_passe')}</label>
-                <input
-                  type="password"
-                  className="form-control"
+                <ChampMotDePasse
                   name="password"
                   value={form.password}
                   onChange={handleChange}

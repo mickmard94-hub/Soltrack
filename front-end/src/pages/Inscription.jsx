@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LangContext';
+import ChampMotDePasse from '../components/ChampMotDePasse';
 
 function Inscription() {
   const navigate = useNavigate();
@@ -80,9 +81,7 @@ function Inscription() {
 
               <div className="mb-3">
                 <label className="form-label">{t('auth.mot_de_passe')}</label>
-                <input
-                  type="password"
-                  className="form-control"
+                <ChampMotDePasse
                   name="password"
                   value={form.password}
                   onChange={handleChange}
@@ -92,9 +91,7 @@ function Inscription() {
 
               <div className="mb-4">
                 <label className="form-label">{t('auth.confirmer_mot_de_passe')}</label>
-                <input
-                  type="password"
-                  className="form-control"
+                <ChampMotDePasse
                   name="password_confirmation"
                   value={form.password_confirmation}
                   onChange={handleChange}

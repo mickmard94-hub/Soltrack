@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLang } from '../contexts/LangContext';
 import api from '../services/api';
+import ChampMotDePasse from '../components/ChampMotDePasse';
 
 function Parametres() {
   const { user, updateUser, logout } = useAuth();
@@ -163,7 +164,7 @@ function Parametres() {
         <Link to={user ? '/sols' : '/'} className="btn btn-sm btn-outline-secondary mb-3">
           ← {t('common.retour')}
         </Link>
-
+        <br />
         <span className="hero-eyebrow">{t('nav.parametres')}</span>
         <h1 className="mt-1 mb-4">{t('parametres.titre')}</h1>
 
@@ -253,9 +254,7 @@ function Parametres() {
                 <form onSubmit={handleMotDePasseSubmit}>
                   <div className="mb-3">
                     <label className="form-label">{t('parametres.mot_de_passe_actuel')}</label>
-                    <input
-                      type="password"
-                      className="form-control"
+                    <ChampMotDePasse
                       value={motDePasse.current_password}
                       onChange={(e) => setMotDePasse({ ...motDePasse, current_password: e.target.value })}
                     />
@@ -264,9 +263,7 @@ function Parametres() {
 
                   <div className="mb-3">
                     <label className="form-label">{t('parametres.nouveau_mot_de_passe')}</label>
-                    <input
-                      type="password"
-                      className="form-control"
+                    <ChampMotDePasse
                       value={motDePasse.password}
                       onChange={(e) => setMotDePasse({ ...motDePasse, password: e.target.value })}
                     />
@@ -275,9 +272,7 @@ function Parametres() {
 
                   <div className="mb-3">
                     <label className="form-label">{t('parametres.confirmer_mot_de_passe')}</label>
-                    <input
-                      type="password"
-                      className="form-control"
+                    <ChampMotDePasse
                       value={motDePasse.password_confirmation}
                       onChange={(e) => setMotDePasse({ ...motDePasse, password_confirmation: e.target.value })}
                     />
@@ -355,8 +350,7 @@ function Parametres() {
                 {user.two_factor_enabled && desactivation2faOuverte && (
                   <div>
                     <label className="form-label small">{t('parametres.deuxfa_desactiver_mdp')}</label>
-                    <input
-                      type="password"
+                    <ChampMotDePasse
                       className="form-control mb-2"
                       value={mdpDesactivation2fa}
                       onChange={(e) => setMdpDesactivation2fa(e.target.value)}
@@ -401,8 +395,7 @@ function Parametres() {
                 ) : (
                   <div>
                     <label className="form-label small">{t('parametres.mot_de_passe_confirmation')}</label>
-                    <input
-                      type="password"
+                    <ChampMotDePasse
                       className="form-control mb-2"
                       value={motDePasseSuppression}
                       onChange={(e) => setMotDePasseSuppression(e.target.value)}

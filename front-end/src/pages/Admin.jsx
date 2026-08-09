@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLang } from '../contexts/LangContext';
 import api from '../services/api';
+import ChampMotDePasse from '../components/ChampMotDePasse';
 
 const PHRASE_CONFIRMATION = 'SUPPRIMER TOUT';
 
@@ -194,8 +195,7 @@ function Admin() {
                 Ce compte n'est pas encore administrateur. Entrez le code secret pour l'activer.
               </p>
               <form onSubmit={handlePromouvoir}>
-                <input
-                  type="password"
+                <ChampMotDePasse
                   className="form-control mb-2"
                   placeholder="Code secret"
                   value={secret}
@@ -229,6 +229,7 @@ function Admin() {
       <Link to="/sols" className="btn btn-sm btn-outline-secondary mb-3">
         ← {t('common.retour')}
       </Link>
+      <br />
 
       <span className="hero-eyebrow">Administration</span>
       <h1 className="mt-1 mb-4">Vue d'ensemble</h1>
