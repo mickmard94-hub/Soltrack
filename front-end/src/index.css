@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
-
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
@@ -17,7 +15,7 @@
   --surface: #131C33;
   --surface-2: #1B2740;
   --texte: #F3F0E8;
-  --texte-muted: rgba(243, 240, 232, 0.64);
+  --texte-muted: rgba(243, 240, 232, 0.72);
   --corail: #FF6B3D;
   --ombre: rgba(0, 0, 0, 0.45);
   --marque: #0B1120;
@@ -39,7 +37,7 @@
   --surface: #FFFFFF;
   --surface-2: #F6F1E6;
   --texte: #10182B;
-  --texte-muted: rgba(16, 24, 43, 0.62);
+  --texte-muted: rgba(16, 24, 43, 0.72);
   --corail: #E14B22;
   --ombre: rgba(16, 24, 43, 0.10);
   --marque: #0E1730;
