@@ -58,6 +58,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('admin/utilisateurs/export', [AdminController::class, 'exportUtilisateursCsv']);
     Route::get('admin/avis/recents', [AdminController::class, 'recentsAvis']);
     Route::get('admin/avis/export', [AdminController::class, 'exportAvisCsv']);
-    Route::get('admin/journal', [AdminController::class, 'journalAudit']);
+    Route::get('admin/journal/recents', [AdminController::class, 'recentsJournal']);
+    Route::get('admin/journal/export', [AdminController::class, 'exportJournalCsv']);
     Route::delete('admin/reinitialiser', [AdminController::class, 'reinitialiserBaseDeDonnees']);
+
+    Route::post('admin/demandes', [AdminController::class, 'creerDemande']);
+    Route::get('admin/demandes', [AdminController::class, 'listeDemandes']);
+    Route::post('admin/demandes/{demande}/approuver', [AdminController::class, 'approuverDemande']);
+    Route::post('admin/demandes/{demande}/refuser', [AdminController::class, 'refuserDemande']);
 });

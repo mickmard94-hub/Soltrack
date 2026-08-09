@@ -7,6 +7,13 @@ import ChampMotDePasse from '../components/ChampMotDePasse';
 
 const PHRASE_CONFIRMATION = 'SUPPRIMER TOUT';
 
+const LIBELLES_ACTIONS_RESTREINTES = {
+  export_utilisateurs: 'Exporter la liste des utilisateurs',
+  export_avis: 'Exporter les avis',
+  export_journal: "Exporter le journal d'audit",
+  reinitialiser_base: 'Réinitialiser la base de données',
+};
+
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString('fr-FR', {
@@ -44,7 +51,7 @@ function BarreProgression({ label, valeur }) {
   );
 }
 
-const LIBELLES_ACTIONS = {
+const LIBELLES_ACTIONS_JOURNAL = {
   inscription: 'Inscription',
   connexion: 'Connexion',
   deconnexion: 'Déconnexion',
@@ -56,6 +63,8 @@ const LIBELLES_ACTIONS = {
   activation_2fa: 'Activation double authentification',
   desactivation_2fa: 'Désactivation double authentification',
   reinitialisation_base: 'Réinitialisation de la base de données',
+  approbation_demande_admin: "Demande d'autorisation approuvée",
+  refus_demande_admin: "Demande d'autorisation refusée",
 };
 
 function Admin() {
@@ -70,33 +79,31 @@ function Admin() {
   const [stats, setStats] = useState(null);
   const [recentsUtilisateurs, setRecentsUtilisateurs] = useState([]);
   const [recentsAvis, setRecentsAvis] = useState([]);
+  const [recentsJournal, setRecentsJournal] = useState([]);
   const [chargement, setChargement] = useState(false);
   const [erreurChargement, setErreurChargement] = useState(null);
   const [exportEnCours, setExportEnCours] = useState(null);
-
-  const [journal, setJournal] = useState([]);
-  const [pageJournal, setPageJournal] = useState(1);
-  const [dernierePageJournal, setDernierePageJournal] = useState(1);
-  const [totalJournal, setTotalJournal] = useState(0);
+  const [messageExport, setMessageExport] = useState(null);
 
   const [admins, setAdmins] = useState([]);
   const [revocationEnCours, setRevocationEnCours] = useState(null);
   const [revocationErreur, setRevocationErreur] = useState(null);
+
+  const [demandes, setDemandes] = useState([]);
+  const [demandeEnCours, setDemandeEnCours] = useState(null);
+  const [traitementEnCours, setTraitementEnCours] = useState(null);
 
   const [zoneReinitOuverte, setZoneReinitOuverte] = useState(false);
   const [confirmationSaisie, setConfirmationSaisie] = useState('');
   const [reinitEnvoi, setReinitEnvoi] = useState(false);
   const [reinitErreur, setReinitErreur] = useState(null);
 
-  const chargerJournal = (page) => {
-    api.get(`/admin/journal?page=${page}`)
-      .then((response) => {
-        setJournal(response.data.data);
-        setPageJournal(response.data.current_page);
-        setDernierePageJournal(response.data.last_page);
-        setTotalJournal(response.data.total);
-      })
-      .catch((error) => console.error('Erreur journal :', error));
+  const estPrincipal = user?.admin_niveau === 'principal';
+
+  const chargerDemandes = () => {
+    api.get('/admin/demandes')
+      .then((response) => setDemandes(response.data))
+      .catch((error) => console.error('Erreur demandes :', error));
   };
 
   const chargerTout = () => {
@@ -106,18 +113,17 @@ function Admin() {
       api.get('/admin/statistiques'),
       api.get('/admin/utilisateurs/recents'),
       api.get('/admin/avis/recents'),
-      api.get('/admin/journal?page=1'),
+      api.get('/admin/journal/recents'),
       api.get('/admin/administrateurs'),
+      api.get('/admin/demandes'),
     ])
-      .then(([reponseStats, reponseUsers, reponseAvis, reponseJournal, reponseAdmins]) => {
+      .then(([reponseStats, reponseUsers, reponseAvis, reponseJournal, reponseAdmins, reponseDemandes]) => {
         setStats(reponseStats.data);
         setRecentsUtilisateurs(reponseUsers.data);
         setRecentsAvis(reponseAvis.data);
-        setJournal(reponseJournal.data.data);
-        setPageJournal(reponseJournal.data.current_page);
-        setDernierePageJournal(reponseJournal.data.last_page);
-        setTotalJournal(reponseJournal.data.total);
+        setRecentsJournal(reponseJournal.data);
         setAdmins(reponseAdmins.data);
+        setDemandes(reponseDemandes.data);
         setChargement(false);
       })
       .catch((error) => {
@@ -169,23 +175,112 @@ function Admin() {
       });
   };
 
-  const exporterCsv = (type) => {
-    setExportEnCours(type);
-    const chemin = type === 'utilisateurs' ? '/admin/utilisateurs/export' : '/admin/avis/export';
+  // Trouve, parmi ses propres demandes, une demande approuvée et pas
+  // encore utilisée pour cette action précise.
+  const demandeApprouveePour = (action) =>
+    demandes.find((d) => d.action === action && d.statut === 'approuvee');
 
-    api.get(chemin, { responseType: 'blob' })
+  const demandeEnAttentePour = (action) =>
+    demandes.find((d) => d.action === action && d.statut === 'en_attente');
+
+  const exporterCsv = (type) => {
+    setMessageExport(null);
+    const action = type === 'utilisateurs' ? 'export_utilisateurs' : type === 'avis' ? 'export_avis' : 'export_journal';
+
+    // Admin secondaire sans autorisation approuvée : on envoie une demande
+    // au lieu d'agir directement.
+    if (!estPrincipal && !demandeApprouveePour(action)) {
+      if (demandeEnAttentePour(action)) {
+        setMessageExport("Une demande est déjà en attente d'approbation du principal.");
+        return;
+      }
+      setDemandeEnCours(action);
+      api.post('/admin/demandes', { action })
+        .then(() => {
+          setMessageExport("Demande envoyée à l'administrateur principal. Vous serez notifié dès qu'elle sera traitée.");
+          chargerDemandes();
+          setDemandeEnCours(null);
+        })
+        .catch((error) => {
+          setDemandeEnCours(null);
+          setMessageExport(error.response?.data?.message || 'Erreur lors de la demande.');
+        });
+      return;
+    }
+
+    setExportEnCours(type);
+    const chemins = {
+      utilisateurs: '/admin/utilisateurs/export',
+      avis: '/admin/avis/export',
+      journal: '/admin/journal/export',
+    };
+    const noms = {
+      utilisateurs: 'utilisateurs.csv',
+      avis: 'avis.csv',
+      journal: 'journal_audit.csv',
+    };
+
+    api.get(chemins[type], { responseType: 'blob' })
       .then((response) => {
-        const nom = type === 'utilisateurs' ? 'utilisateurs.csv' : 'avis.csv';
-        telechargerBlob(response.data, nom);
+        telechargerBlob(response.data, noms[type]);
         setExportEnCours(null);
+        chargerDemandes(); // l'autorisation vient d'être consommée
       })
       .catch((error) => {
         console.error('Erreur export CSV :', error);
         setExportEnCours(null);
+        setMessageExport(error.response?.data?.message || 'Erreur lors de l\'export.');
+      });
+  };
+
+  const approuverDemande = (demandeId) => {
+    setTraitementEnCours(demandeId);
+    api.post(`/admin/demandes/${demandeId}/approuver`)
+      .then(() => {
+        setDemandes((liste) => liste.filter((d) => d.id !== demandeId));
+        setTraitementEnCours(null);
+      })
+      .catch((error) => {
+        console.error(error);
+        setTraitementEnCours(null);
+      });
+  };
+
+  const refuserDemande = (demandeId) => {
+    setTraitementEnCours(demandeId);
+    api.post(`/admin/demandes/${demandeId}/refuser`)
+      .then(() => {
+        setDemandes((liste) => liste.filter((d) => d.id !== demandeId));
+        setTraitementEnCours(null);
+      })
+      .catch((error) => {
+        console.error(error);
+        setTraitementEnCours(null);
       });
   };
 
   const handleReinitialiser = () => {
+    const action = 'reinitialiser_base';
+
+    if (!estPrincipal && !demandeApprouveePour(action)) {
+      if (demandeEnAttentePour(action)) {
+        setReinitErreur("Une demande est déjà en attente d'approbation du principal.");
+        return;
+      }
+      setReinitEnvoi(true);
+      api.post('/admin/demandes', { action })
+        .then(() => {
+          setReinitErreur("Demande envoyée à l'administrateur principal. Vous serez notifié dès qu'elle sera traitée.");
+          chargerDemandes();
+          setReinitEnvoi(false);
+        })
+        .catch((error) => {
+          setReinitEnvoi(false);
+          setReinitErreur(error.response?.data?.message || 'Erreur lors de la demande.');
+        });
+      return;
+    }
+
     setReinitErreur(null);
     setReinitEnvoi(true);
 
@@ -291,14 +386,20 @@ function Admin() {
         </div>
       </div>
 
+      {messageExport && <div className="alert alert-warning py-2">{messageExport}</div>}
+
       <div className="admin-section-entete">
         <h6 className="mb-0">Derniers utilisateurs inscrits</h6>
         <button
           className="btn btn-sm btn-outline-secondary"
           onClick={() => exporterCsv('utilisateurs')}
-          disabled={exportEnCours === 'utilisateurs' || stats.nombre_utilisateurs === 0}
+          disabled={exportEnCours === 'utilisateurs' || demandeEnCours === 'export_utilisateurs' || stats.nombre_utilisateurs === 0}
         >
-          {exportEnCours === 'utilisateurs' ? 'Export...' : '⬇ Export CSV complet'}
+          {exportEnCours === 'utilisateurs' || demandeEnCours === 'export_utilisateurs'
+            ? 'Patientez...'
+            : !estPrincipal && !demandeApprouveePour('export_utilisateurs')
+              ? '🔒 Demander l\'export CSV'
+              : '⬇ Export CSV complet'}
         </button>
       </div>
       <div className="card mb-4">
@@ -327,9 +428,13 @@ function Admin() {
         <button
           className="btn btn-sm btn-outline-secondary"
           onClick={() => exporterCsv('avis')}
-          disabled={exportEnCours === 'avis' || stats.nombre_avis === 0}
+          disabled={exportEnCours === 'avis' || demandeEnCours === 'export_avis' || stats.nombre_avis === 0}
         >
-          {exportEnCours === 'avis' ? 'Export...' : '⬇ Export CSV complet'}
+          {exportEnCours === 'avis' || demandeEnCours === 'export_avis'
+            ? 'Patientez...'
+            : !estPrincipal && !demandeApprouveePour('export_avis')
+              ? '🔒 Demander l\'export CSV'
+              : '⬇ Export CSV complet'}
         </button>
       </div>
       <div className="card mb-4">
@@ -366,10 +471,16 @@ function Admin() {
           {admins.map((admin) => (
             <div className="admin-recent-item" key={admin.id}>
               <div>
-                <div className="fw-semibold">{admin.name}</div>
+                <div className="d-flex align-items-center gap-2">
+                  <span className="fw-semibold">{admin.name}</span>
+                  <span className={`sceau ${admin.admin_niveau === 'principal' ? 'sceau-paye' : 'sceau-neutre'}`}>
+                    {admin.admin_niveau === 'principal' ? 'Principal' : 'Secondaire'}
+                  </span>
+                  {admin.id === user.id && <span className="text-muted small">(vous)</span>}
+                </div>
                 <div className="text-muted small">{admin.email}</div>
               </div>
-              {admin.id !== user.id ? (
+              {estPrincipal && admin.id !== user.id && (
                 <button
                   type="button"
                   className="btn btn-sm btn-outline-danger"
@@ -378,67 +489,92 @@ function Admin() {
                 >
                   {revocationEnCours === admin.id ? '...' : 'Révoquer'}
                 </button>
-              ) : (
-                <span className="sceau sceau-paye">Vous</span>
               )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Journal d'audit */}
-      <div className="admin-section-entete">
-        <h6 className="mb-0">Journal d'audit ({totalJournal})</h6>
-      </div>
-      <div className="table-responsive-wrapper mb-2">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Utilisateur</th>
-              <th>Action</th>
-              <th>Entité</th>
-            </tr>
-          </thead>
-          <tbody>
-            {journal.length === 0 && (
-              <tr>
-                <td colSpan={4} className="text-muted small text-center py-3">Aucune entrée pour l'instant.</td>
-              </tr>
-            )}
-            {journal.map((entree) => (
-              <tr key={entree.id}>
-                <td className="small">{formatDateHeure(entree.created_at)}</td>
-                <td className="small">{entree.user ? entree.user.name : 'Système / inconnu'}</td>
-                <td className="small">{LIBELLES_ACTIONS[entree.action] || entree.action}</td>
-                <td className="small">{entree.entite}{entree.entite_id ? ` #${entree.entite_id}` : ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {dernierePageJournal > 1 && (
-        <nav className="d-flex justify-content-center gap-2 mb-5">
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={pageJournal === 1}
-            onClick={() => chargerJournal(pageJournal - 1)}
-          >
-            Précédent
-          </button>
-          <span className="align-self-center small">
-            Page {pageJournal} sur {dernierePageJournal}
-          </span>
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={pageJournal === dernierePageJournal}
-            onClick={() => chargerJournal(pageJournal + 1)}
-          >
-            Suivant
-          </button>
-        </nav>
+      {/* Demandes d'autorisation — vue principal : approuver/refuser */}
+      {estPrincipal && (
+        <>
+          <div className="admin-section-entete">
+            <h6 className="mb-0">Demandes d'autorisation en attente ({demandes.length})</h6>
+          </div>
+          <div className="card mb-4">
+            <div className="card-body px-4 py-2">
+              {demandes.length === 0 ? (
+                <p className="text-muted small py-2 mb-0">Aucune demande en attente.</p>
+              ) : (
+                demandes.map((d) => (
+                  <div className="admin-recent-item" key={d.id}>
+                    <div>
+                      <div className="fw-semibold small">{LIBELLES_ACTIONS_RESTREINTES[d.action] || d.action}</div>
+                      <div className="text-muted small">
+                        {d.demandeur?.name} ({d.demandeur?.email}) &middot; {formatDateHeure(d.created_at)}
+                      </div>
+                    </div>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-sol border-0"
+                        onClick={() => approuverDemande(d.id)}
+                        disabled={traitementEnCours === d.id}
+                      >
+                        Approuver
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => refuserDemande(d.id)}
+                        disabled={traitementEnCours === d.id}
+                      >
+                        Refuser
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
       )}
+
+      {/* Journal d'audit — 3 derniers + export CSV */}
+      <div className="admin-section-entete">
+        <h6 className="mb-0">Journal d'audit — actions récentes</h6>
+        <button
+          className="btn btn-sm btn-outline-secondary"
+          onClick={() => exporterCsv('journal')}
+          disabled={exportEnCours === 'journal' || demandeEnCours === 'export_journal'}
+        >
+          {exportEnCours === 'journal' || demandeEnCours === 'export_journal'
+            ? 'Patientez...'
+            : !estPrincipal && !demandeApprouveePour('export_journal')
+              ? '🔒 Demander l\'export CSV'
+              : '⬇ Export CSV complet'}
+        </button>
+      </div>
+      <div className="card mb-5">
+        <div className="card-body px-4 py-2">
+          {recentsJournal.length === 0 ? (
+            <p className="text-muted small py-2 mb-0">Aucune entrée pour l'instant.</p>
+          ) : (
+            recentsJournal.map((entree) => (
+              <div className="admin-recent-item" key={entree.id}>
+                <div>
+                  <div className="fw-semibold small">{LIBELLES_ACTIONS_JOURNAL[entree.action] || entree.action}</div>
+                  <div className="text-muted small">
+                    {entree.user ? entree.user.name : 'Système / inconnu'}
+                    {entree.entite ? ` · ${entree.entite}${entree.entite_id ? ` #${entree.entite_id}` : ''}` : ''}
+                  </div>
+                </div>
+                <div className="text-muted small text-end">{formatDateHeure(entree.created_at)}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
 
       <div className="card border-danger">
         <div className="card-body p-4">
@@ -446,6 +582,7 @@ function Admin() {
           <p className="text-muted small mb-3">
             Supprime définitivement TOUTES les données (utilisateurs, sols, membres, cotisations, avis).
             Cette action est irréversible et vous déconnectera aussi, puisque votre propre compte sera supprimé.
+            {!estPrincipal && ' Nécessite l\'autorisation de l\'administrateur principal.'}
           </p>
 
           {!zoneReinitOuverte ? (
@@ -474,9 +611,13 @@ function Admin() {
                   type="button"
                   className="btn btn-outline-danger"
                   onClick={handleReinitialiser}
-                  disabled={reinitEnvoi || confirmationSaisie !== PHRASE_CONFIRMATION}
+                  disabled={reinitEnvoi || (estPrincipal && confirmationSaisie !== PHRASE_CONFIRMATION)}
                 >
-                  {reinitEnvoi ? t('common.chargement') : 'Confirmer la suppression totale'}
+                  {reinitEnvoi
+                    ? t('common.chargement')
+                    : !estPrincipal && !demandeApprouveePour('reinitialiser_base')
+                      ? "Demander l'autorisation"
+                      : 'Confirmer la suppression totale'}
                 </button>
                 <button
                   type="button"
