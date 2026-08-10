@@ -15,23 +15,44 @@ function ModifierSol() {
     nom: '',
     montant_cotisation: '',
     frequence: 'mensuelle',
+    frequence_jours: '',
     nombre_tours: '',
     date_debut: '',
     statut: 'actif',
+    penalites_actives: false,
+    penalite_montant_base: '',
+    penalite_palier10_actif: false,
+    penalite_palier10_mode: 'doubler',
+    penalite_palier10_montant: '',
+    penalite_palier30_actif: false,
+    penalite_palier30_mode: 'doubler',
+    penalite_palier30_montant: '',
+    penalites_verrouillees: false,
   });
 
   useEffect(() => {
     api.get(`/sols/${id}`)
       .then((response) => {
+        const d = response.data;
         setForm({
-          nom: response.data.nom,
-          montant_cotisation: response.data.montant_cotisation,
-          frequence: response.data.frequence,
-          nombre_tours: response.data.nombre_tours,
-          date_debut: response.data.date_debut,
-          statut: response.data.statut,
+          nom: d.nom,
+          montant_cotisation: d.montant_cotisation,
+          frequence: d.frequence_jours ? 'personnalisee' : d.frequence,
+          frequence_jours: d.frequence_jours || '',
+          nombre_tours: d.nombre_tours,
+          date_debut: d.date_debut,
+          statut: d.statut,
+          penalites_actives: !!d.penalites_actives,
+          penalite_montant_base: d.penalite_montant_base || '',
+          penalite_palier10_actif: !!d.penalite_palier10_actif,
+          penalite_palier10_mode: d.penalite_palier10_mode || 'doubler',
+          penalite_palier10_montant: d.penalite_palier10_montant || '',
+          penalite_palier30_actif: !!d.penalite_palier30_actif,
+          penalite_palier30_mode: d.penalite_palier30_mode || 'doubler',
+          penalite_palier30_montant: d.penalite_palier30_montant || '',
+          penalites_verrouillees: !!d.penalites_verrouillees,
         });
-        setADesTours(Boolean(response.data.tours && response.data.tours.length > 0));
+        setADesTours(Boolean(d.tours && d.tours.length > 0));
         setChargement(false);
       })
       .catch((error) => {
@@ -41,7 +62,8 @@ function ModifierSol() {
   }, [id]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
   };
 
   const handleSubmit = (e) => {
@@ -57,7 +79,14 @@ function ModifierSol() {
     setErreurs({});
     setEnvoi(true);
 
-    api.put(`/sols/${id}`, form)
+    const donnees = { ...form };
+    if (donnees.frequence === 'personnalisee') {
+      donnees.frequence = 'mensuelle';
+    } else {
+      donnees.frequence_jours = null;
+    }
+
+    api.put(`/sols/${id}`, donnees)
       .then(() => {
         navigate(`/sols/${id}`);
       })
@@ -88,13 +117,13 @@ function ModifierSol() {
         <span className="hero-eyebrow">{t('modifier_sol.eyebrow')}</span>
         <h1 className="mt-1 mb-4">{t('modifier_sol.titre')}</h1>
 
-        <div className="card">
-          <div className="card-body p-4">
-            {erreurs.general && (
-              <div className="alert alert-danger">{erreurs.general[0]}</div>
-            )}
+        {erreurs.general && (
+          <div className="alert alert-danger">{erreurs.general[0]}</div>
+        )}
 
-            <form onSubmit={handleSubmit}>
+        <div className="card mb-3">
+          <div className="card-body p-4">
+            <form onSubmit={handleSubmit} id="form-modifier-sol">
               <div className="mb-3">
                 <label className="form-label">{t('modifier_sol.nom_sol')}</label>
                 <input
@@ -130,6 +159,7 @@ function ModifierSol() {
                 >
                   <option value="hebdomadaire">{t('modifier_sol.hebdomadaire')}</option>
                   <option value="mensuelle">{t('modifier_sol.mensuelle')}</option>
+                  <option value="personnalisee">{t('creer_sol.personnalisee')}</option>
                 </select>
                 {aDesTours && (
                   <div className="form-text text-muted">
@@ -137,6 +167,23 @@ function ModifierSol() {
                   </div>
                 )}
               </div>
+
+              {form.frequence === 'personnalisee' && (
+                <div className="mb-3">
+                  <label className="form-label">{t('creer_sol.frequence_jours_label')}</label>
+                  <input
+                    type="number"
+                    min={7}
+                    className="form-control"
+                    name="frequence_jours"
+                    value={form.frequence_jours}
+                    onChange={handleChange}
+                    disabled={aDesTours}
+                  />
+                  <div className="form-text">{t('creer_sol.frequence_jours_aide')}</div>
+                  {erreurs.frequence_jours && <div className="text-danger small mt-1">{erreurs.frequence_jours[0]}</div>}
+                </div>
+              )}
 
               <div className="mb-3">
                 <label className="form-label">{t('modifier_sol.nombre_tours')}</label>
@@ -185,17 +232,145 @@ function ModifierSol() {
                   </div>
                 )}
               </div>
-
-              <div className="d-flex gap-2">
-                <button type="submit" className="btn-sol border-0" disabled={envoi}>
-                  {envoi ? t('modifier_sol.enregistrement') : t('modifier_sol.enregistrer')}
-                </button>
-                <button type="button" className="btn btn-outline-secondary" onClick={handleAnnuler}>
-                  {t('modifier_sol.annuler')}
-                </button>
-              </div>
             </form>
           </div>
+        </div>
+
+        <div className="card mb-3">
+          <div className="card-body p-4">
+            {form.penalites_verrouillees && (
+              <div className="alert alert-warning py-2 small mb-3">
+                {t('creer_sol.verrouille_note')}
+              </div>
+            )}
+
+            <fieldset disabled={form.penalites_verrouillees}>
+              <div className="form-check mb-3">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="penalites_actives"
+                  name="penalites_actives"
+                  checked={form.penalites_actives}
+                  onChange={handleChange}
+                  form="form-modifier-sol"
+                />
+                <label className="form-check-label fw-semibold" htmlFor="penalites_actives">
+                  {t('creer_sol.penalites_titre')}
+                </label>
+              </div>
+
+              {form.penalites_actives && (
+                <>
+                  <div className="mb-3">
+                    <label className="form-label">{t('creer_sol.penalite_montant_base')}</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      name="penalite_montant_base"
+                      value={form.penalite_montant_base}
+                      onChange={handleChange}
+                      form="form-modifier-sol"
+                    />
+                    {erreurs.penalite_montant_base && <div className="text-danger small mt-1">{erreurs.penalite_montant_base[0]}</div>}
+                  </div>
+
+                  <hr />
+
+                  <div className="form-check mb-2">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id="penalite_palier10_actif"
+                      name="penalite_palier10_actif"
+                      checked={form.penalite_palier10_actif}
+                      onChange={handleChange}
+                      form="form-modifier-sol"
+                    />
+                    <label className="form-check-label fw-semibold" htmlFor="penalite_palier10_actif">
+                      {t('creer_sol.palier10_titre')}
+                    </label>
+                  </div>
+                  {form.penalite_palier10_actif && (
+                    <div className="mb-3 ps-4">
+                      <select
+                        className="form-select mb-2"
+                        name="penalite_palier10_mode"
+                        value={form.penalite_palier10_mode}
+                        onChange={handleChange}
+                        form="form-modifier-sol"
+                      >
+                        <option value="doubler">{t('creer_sol.mode_doubler')}</option>
+                        <option value="ajouter">{t('creer_sol.mode_ajouter')}</option>
+                      </select>
+                      {form.penalite_palier10_mode === 'ajouter' && (
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="penalite_palier10_montant"
+                          value={form.penalite_palier10_montant}
+                          onChange={handleChange}
+                          form="form-modifier-sol"
+                          placeholder={t('creer_sol.palier10_montant')}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  <hr />
+
+                  <div className="form-check mb-2">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id="penalite_palier30_actif"
+                      name="penalite_palier30_actif"
+                      checked={form.penalite_palier30_actif}
+                      onChange={handleChange}
+                      form="form-modifier-sol"
+                    />
+                    <label className="form-check-label fw-semibold" htmlFor="penalite_palier30_actif">
+                      {t('creer_sol.palier30_titre')}
+                    </label>
+                  </div>
+                  {form.penalite_palier30_actif && (
+                    <div className="mb-2 ps-4">
+                      <select
+                        className="form-select mb-2"
+                        name="penalite_palier30_mode"
+                        value={form.penalite_palier30_mode}
+                        onChange={handleChange}
+                        form="form-modifier-sol"
+                      >
+                        <option value="doubler">{t('creer_sol.palier30_mode_doubler')}</option>
+                        <option value="ajouter">{t('creer_sol.mode_ajouter')}</option>
+                      </select>
+                      {form.penalite_palier30_mode === 'ajouter' && (
+                        <input
+                          type="number"
+                          className="form-control"
+                          name="penalite_palier30_montant"
+                          value={form.penalite_palier30_montant}
+                          onChange={handleChange}
+                          form="form-modifier-sol"
+                          placeholder={t('creer_sol.palier30_montant')}
+                        />
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </fieldset>
+          </div>
+        </div>
+
+        <div className="d-flex gap-2">
+          <button type="submit" form="form-modifier-sol" className="btn-sol border-0" disabled={envoi}>
+            {envoi ? t('modifier_sol.enregistrement') : t('modifier_sol.enregistrer')}
+          </button>
+          <button type="button" className="btn btn-outline-secondary" onClick={handleAnnuler}>
+            {t('modifier_sol.annuler')}
+          </button>
         </div>
       </div>
     </div>

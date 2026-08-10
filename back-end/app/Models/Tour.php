@@ -41,7 +41,8 @@ class Tour extends Model
             return null;
         }
 
-        $intervalleJours = $this->sol->frequence === 'hebdomadaire' ? 7 : 30;
+        $intervalleJours = $this->sol->frequence_jours
+            ?? ($this->sol->frequence === 'hebdomadaire' ? 7 : 30);
 
         return Carbon::parse($this->date_prevue)
             ->addDays($intervalleJours)

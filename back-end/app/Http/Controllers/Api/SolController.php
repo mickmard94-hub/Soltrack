@@ -23,6 +23,7 @@ class SolController extends Controller
             'nom' => 'required|string|max:255',
             'montant_cotisation' => 'required|numeric|min:0',
             'frequence' => 'required|in:hebdomadaire,mensuelle',
+            'frequence_jours' => 'nullable|integer|min:7',
             'nombre_tours' => 'required|integer|min:1',
             'date_debut' => 'required|date',
             'penalites_actives' => 'sometimes|boolean',
@@ -61,6 +62,7 @@ class SolController extends Controller
             'nom' => 'sometimes|required|string|max:255',
             'montant_cotisation' => 'sometimes|required|numeric|min:0',
             'frequence' => 'sometimes|required|in:hebdomadaire,mensuelle',
+            'frequence_jours' => 'nullable|integer|min:7',
             'nombre_tours' => 'sometimes|required|integer|min:1',
             'date_debut' => 'sometimes|required|date',
             'statut' => 'sometimes|required|in:actif,cloture',
@@ -90,9 +92,6 @@ class SolController extends Controller
             }
         }
 
-        // Dès qu'une pénalité a été réellement appliquée à un membre de
-        // ce sol, toute la configuration des pénalités est figée pour
-        // toujours.
         if ($sol->penalites_verrouillees) {
             $champsPenalites = [
                 'penalites_actives', 'penalite_montant_base',

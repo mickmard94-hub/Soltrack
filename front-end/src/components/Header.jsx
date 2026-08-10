@@ -13,6 +13,7 @@ function Header() {
   const { t } = useLang();
   const estActif = (chemin) => location.pathname === chemin;
   const surParametres = location.pathname === '/parametres';
+  const surNotifications = location.pathname === '/notifications';
 
   const [nonLues, setNonLues] = useState(0);
 
@@ -40,6 +41,14 @@ function Header() {
       navigate(-1);
     } else {
       navigate('/parametres');
+    }
+  };
+
+  const handleNotificationsClick = () => {
+    if (surNotifications) {
+      navigate(-1);
+    } else {
+      navigate('/notifications');
     }
   };
 
@@ -77,9 +86,10 @@ function Header() {
           )}
 
           {user && (
-            <Link
-              to="/notifications"
+            <button
+              type="button"
               className="theme-toggle position-relative"
+              onClick={handleNotificationsClick}
               aria-label={t('notifications.titre')}
               title={t('notifications.titre')}
             >
@@ -98,7 +108,7 @@ function Header() {
                   {nonLues > 9 ? '9+' : nonLues}
                 </span>
               )}
-            </Link>
+            </button>
           )}
 
           <button

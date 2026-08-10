@@ -27,23 +27,15 @@ class MembreController extends Controller
         return $sol->membres;
     }
 
-    /**
-     * Calcule la date de début réelle d'un tour à partir de son ordre et
-     * de la fréquence du sol.
-     */
     private function calculerDatePrevue(Sol $sol, int $ordreReception)
     {
-        $dateInterval = $sol->frequence === 'hebdomadaire' ? 7 : 30;
+        $dateInterval = $sol->frequence_jours
+            ?? ($sol->frequence === 'hebdomadaire' ? 7 : 30);
 
         return Carbon::parse($sol->date_debut)
             ->addDays($dateInterval * ($ordreReception - 1));
     }
 
-    /**
-     * Assigne (ou réassigne) le tour correspondant à un ordre de réception
-     * donné à un membre précis, en conservant la date propre à cet
-     * emplacement.
-     */
     private function assignerTour(Sol $sol, int $ordreReception, ?int $membreId)
     {
         Tour::updateOrCreate(
@@ -56,11 +48,6 @@ class MembreController extends Controller
         );
     }
 
-    /**
-     * Vérifie qu'aucun tour déjà versé ne se trouve dans la plage
-     * d'emplacements [min, max] qui va être décalée : on ne réécrit jamais
-     * l'histoire d'une cagnotte déjà remise.
-     */
     private function plageContientTourVerse(Sol $sol, int $min, int $max): bool
     {
         return Tour::where('sol_id', $sol->id)
@@ -70,10 +57,6 @@ class MembreController extends Controller
     }
 
     // POST /api/sols/{sol}/membres
-    // L'ordre de réception choisi correspond à une position d'insertion :
-    // toute la suite des membres à partir de cette position décale
-    // automatiquement d'un cran, pour garantir une séquence 1..x continue,
-    // sans jamais laisser de trou, quel que soit l'ordre d'ajout.
     public function store(Request $request, Sol $sol)
     {
         $this->verifierProprietaire($request, $sol);
@@ -107,14 +90,8 @@ class MembreController extends Controller
         }
 
         $membre = DB::transaction(function () use ($sol, $validated, $position) {
-            // Verrouille la ligne du sol pour toute la transaction : évite
-            // que deux ajouts simultanés ne calculent le même ordre_reception
-            // libre et créent un doublon (condition de course).
             Sol::where('id', $sol->id)->lockForUpdate()->first();
 
-            // Décale tous les membres à partir de la position choisie, en
-            // partant du plus grand ordre pour ne jamais créer de doublon
-            // transitoire.
             $membresADecaler = $sol->membres()
                 ->where('ordre_reception', '>=', $position)
                 ->orderByDesc('ordre_reception')
@@ -141,11 +118,6 @@ class MembreController extends Controller
     }
 
     // PUT /api/membres/{membre}
-    // Déplacer un membre vers une nouvelle position décale automatiquement
-    // tous les membres compris entre l'ancienne et la nouvelle position —
-    // SAUF quand un seul autre membre est concerné : dans ce cas précis,
-    // c'est un échange direct entre deux personnes, et on demande
-    // confirmation explicite (409) plutôt que de l'appliquer en silence.
     public function update(Request $request, Membre $membre)
     {
         $sol = $membre->sol;
@@ -172,12 +144,6 @@ class MembreController extends Controller
                 ], 422);
             }
 
-            // Détecte un échange direct à deux personnes : si un seul
-            // autre membre occupe la plage concernée, décaler
-            // silencieusement serait trompeur (ça reviendrait au même
-            // qu'un échange, mais sans le dire). On demande confirmation
-            // explicite via l'échange de tour plutôt que de l'appliquer
-            // tout seul.
             $autresDansLaPlage = $sol->membres()
                 ->where('id', '!=', $membre->id)
                 ->whereBetween('ordre_reception', [$min, $max])
@@ -195,16 +161,9 @@ class MembreController extends Controller
             }
 
             DB::transaction(function () use ($sol, $membre, $ancienOrdre, $nouvelOrdre) {
-                // Libère d'abord la position actuelle du membre déplacé
-                // avec une valeur temporaire (-1, qui n'existe jamais
-                // réellement) pour ne jamais avoir deux membres avec le
-                // même ordre_reception en même temps, même le temps d'une
-                // seule requête SQL (contrainte unique en base).
                 $membre->update(['ordre_reception' => -1]);
 
                 if ($nouvelOrdre > $ancienOrdre) {
-                    // Le membre avance : tout le monde entre son ancienne et
-                    // sa nouvelle position recule d'un cran.
                     $aDecaler = $sol->membres()
                         ->whereBetween('ordre_reception', [$ancienOrdre + 1, $nouvelOrdre])
                         ->orderBy('ordre_reception')
@@ -216,8 +175,6 @@ class MembreController extends Controller
                         $this->assignerTour($sol, $nouvelOrdreAutre, $autreMembre->id);
                     }
                 } else {
-                    // Le membre recule : tout le monde entre sa nouvelle et
-                    // son ancienne position avance d'un cran.
                     $aDecaler = $sol->membres()
                         ->whereBetween('ordre_reception', [$nouvelOrdre, $ancienOrdre - 1])
                         ->orderByDesc('ordre_reception')
@@ -241,8 +198,6 @@ class MembreController extends Controller
     }
 
     // POST /api/sols/{sol}/membres/echanger-tour
-    // Action distincte et volontaire : échange direct entre deux membres
-    // précis, sans décaler qui que ce soit d'autre.
     public function echangerTour(Request $request, Sol $sol)
     {
         $this->verifierProprietaire($request, $sol);
@@ -280,9 +235,6 @@ class MembreController extends Controller
         }
 
         DB::transaction(function () use ($membre1, $membre2, $tour1, $tour2, $ordre1, $ordre2) {
-            // Passe par une position temporaire pour éviter toute
-            // collision avec la contrainte unique (sol_id, ordre_reception)
-            // pendant l'échange des deux positions.
             $membre1->update(['ordre_reception' => -1]);
             $membre2->update(['ordre_reception' => $ordre1]);
             $membre1->update(['ordre_reception' => $ordre2]);
@@ -297,8 +249,6 @@ class MembreController extends Controller
     }
 
     // DELETE /api/membres/{membre}
-    // Retirer un membre laisse un trou dans la séquence : on referme
-    // automatiquement la plage en décalant tous ceux qui suivent.
     public function destroy(Request $request, Membre $membre)
     {
         $sol = $membre->sol;
@@ -327,10 +277,6 @@ class MembreController extends Controller
                 $this->assignerTour($sol, $nouvelOrdre, $autreMembre->id);
             }
 
-            // Le dernier emplacement (qui n'a plus personne) est libéré.
-            // La colonne membre_beneficiaire_id est NOT NULL en base :
-            // on ne peut donc pas la mettre à null, il faut supprimer la
-            // ligne du tour devenu orphelin.
             Tour::where('sol_id', $sol->id)
                 ->where('numero_tour', $nombreMembresActuel)
                 ->delete();

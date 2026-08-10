@@ -10,7 +10,7 @@ function formatDate(dateStr) {
 }
 
 function calculerDateFinSol(sol) {
-  const joursParTour = sol.frequence === 'hebdomadaire' ? 7 : 30;
+  const joursParTour = sol.frequence_jours || (sol.frequence === 'hebdomadaire' ? 7 : 30);
   const [annee, mois, jour] = sol.date_debut.slice(0, 10).split('-').map(Number);
   const debutUTC = Date.UTC(annee, mois - 1, jour);
   const finUTC = debutUTC + (joursParTour * sol.nombre_tours - 1) * 86400000;
@@ -52,11 +52,11 @@ function ListeSols() {
     return { classe: 'sceau-neutre', label: t('liste_sols.cloture') };
   };
 
-  // La fréquence est stockée en base en français ('hebdomadaire' /
-  // 'mensuelle') : on la fait passer par la traduction avant affichage
-  // plutôt que de montrer le mot brut de la base de données.
-  const frequenceLabel = (frequence) => {
-    return frequence === 'hebdomadaire' ? t('creer_sol.hebdomadaire') : t('creer_sol.mensuelle');
+  const frequenceLabel = (sol) => {
+    if (sol.frequence_jours) {
+      return `${sol.frequence_jours} j`;
+    }
+    return sol.frequence === 'hebdomadaire' ? t('creer_sol.hebdomadaire') : t('creer_sol.mensuelle');
   };
 
   return (
@@ -99,7 +99,7 @@ function ListeSols() {
                   </div>
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <span className="text-muted small">{t('liste_sols.frequence')}</span>
-                    <span>{frequenceLabel(sol.frequence)}</span>
+                    <span>{frequenceLabel(sol)}</span>
                   </div>
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <span className="text-muted small">{t('liste_sols.periode')}</span>

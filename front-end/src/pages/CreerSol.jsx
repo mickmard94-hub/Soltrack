@@ -12,6 +12,7 @@ function CreerSol() {
     nom: '',
     montant_cotisation: '',
     frequence: 'mensuelle',
+    frequence_jours: '',
     nombre_tours: '',
     date_debut: '',
     penalites_actives: false,
@@ -34,7 +35,14 @@ function CreerSol() {
     setErreurs({});
     setEnvoi(true);
 
-    api.post('/sols', form)
+    const donnees = { ...form };
+    if (donnees.frequence === 'personnalisee') {
+      donnees.frequence = 'mensuelle';
+    } else {
+      donnees.frequence_jours = null;
+    }
+
+    api.post('/sols', donnees)
       .then((response) => {
         navigate(`/sols/${response.data.id}`);
       })
@@ -93,12 +101,35 @@ function CreerSol() {
                   className="form-select"
                   name="frequence"
                   value={form.frequence}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (e.target.value !== 'personnalisee') {
+                      setForm((prev) => ({ ...prev, frequence: e.target.value, frequence_jours: '' }));
+                    }
+                  }}
                 >
                   <option value="hebdomadaire">{t('creer_sol.hebdomadaire')}</option>
                   <option value="mensuelle">{t('creer_sol.mensuelle')}</option>
+                  <option value="personnalisee">{t('creer_sol.personnalisee')}</option>
                 </select>
               </div>
+
+              {form.frequence === 'personnalisee' && (
+                <div className="mb-3">
+                  <label className="form-label">{t('creer_sol.frequence_jours_label')}</label>
+                  <input
+                    type="number"
+                    min={7}
+                    className="form-control"
+                    name="frequence_jours"
+                    value={form.frequence_jours}
+                    onChange={handleChange}
+                    placeholder="Ex : 14"
+                  />
+                  <div className="form-text">{t('creer_sol.frequence_jours_aide')}</div>
+                  {erreurs.frequence_jours && <div className="text-danger small mt-1">{erreurs.frequence_jours[0]}</div>}
+                </div>
+              )}
 
               <div className="mb-3">
                 <label className="form-label">{t('creer_sol.nombre_tours')}</label>
@@ -131,7 +162,6 @@ function CreerSol() {
           </div>
         </div>
 
-        {/* Configuration des pénalités — optionnelle */}
         <div className="card mb-3">
           <div className="card-body p-4">
             <div className="form-check mb-3">
